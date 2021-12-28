@@ -25,13 +25,13 @@ def makeMotifRpt(motifs):
     tot = motifs['S'] + motifs['C'] + motifs['T'] + motifs['V']
     rows.append({'col1':tot, 'col2': 'Total PSMs w/ Consensus Motif'})
     rows.append({'col1': motifs['T'], 'col2': 'PSMs w/ nXT Consensus Motif'})
-    rows.append({'col1': (motifs['T']/tot)*100 , 'col2':'Percent nXT'})
+    rows.append({'col1': "{:.2f}".format((motifs['T']/tot)*100) , 'col2':'% nXT'})
     rows.append({'col1': motifs['S'], 'col2': 'PSMs w/ nXS Consensus Motif'})
-    rows.append({'col1': (motifs['S']/tot)*100 , 'col2':'Percent nXS'})
+    rows.append({'col1': "{:.2f}".format((motifs['S']/tot)*100) , 'col2':'% nXS'})
     rows.append({'col1': motifs['C'], 'col2': 'PSMs w/ nXC Consensus Motif'})
-    rows.append({'col1': (motifs['C']/tot)*100 , 'col2':'Percent nXC'})
+    rows.append({'col1': "{:.2f}".format((motifs['C']/tot)*100) , 'col2':'% nXC'})
     rows.append({'col1': motifs['V'], 'col2': 'PSMs w/ nXV Consensus Motif'})
-    rows.append({'col1': (motifs['V']/tot)*100 , 'col2':'Percent nXV'})
+    rows.append({'col1': "{:.2f}".format((motifs['V']/tot)*100) , 'col2':'% nXV'})
     df = pd.DataFrame(rows)
     return(df)
 
@@ -40,13 +40,13 @@ def makeSpecRpt(numSCMprots, numNSBprots, numSCMpsms, numNSBpsms, numOnePSM ):
     numProts = numSCMprots + numNSBprots
     numPSMs = numSCMpsms + numNSBpsms
 #    tot = motifs['NXS'] + motifs['NXC'] + motifs['NXT'] + motifs['NXV']
-    rows.append({'col1':'All Proteins', 'col2': numProts, 'col3':0, 'col4':' '})
-    rows.append({'col1':'Proteins with Consensus Motif', 'col2': numSCMprots, 'col3': (numSCMprots/numProts)*100, 'col4': 'percent of all proteins'})
-    rows.append({'col1':'Non-Specific Binding Proteins', 'col2': numNSBprots, 'col3': (numNSBprots/numProts)*100, 'col4': 'percent of all proteins'})
-    rows.append({'col1':'All PSMs', 'col2': numPSMs})
-    rows.append({'col1':'PSMs with Consensus Motif', 'col2': numSCMpsms, 'col3': (numSCMpsms/numPSMs)*100, 'col4': 'percent of all proteins'})
-    rows.append({'col1':'Non-Specific Binding PSMs', 'col2': numNSBpsms, 'col3': (numNSBprots/numPSMs)*100, 'col4': 'percent of all PSMs'})
-    rows.append({'col1':'Proteins with just one SCM PSM', 'col2': numOnePSM})
+    rows.append({'col1':'All Proteins', 'col2': numProts, 'col3':'', 'col4':''})
+    rows.append({'col1':'Proteins with Consensus Motif', 'col2': numSCMprots, 'col3': "{:.2f}".format((numSCMprots/numProts)*100), 'col4': '% of all proteins'})
+    rows.append({'col1':'Non-Specific Binding Proteins', 'col2': numNSBprots, 'col3': "{:.2f}".format((numNSBprots/numProts)*100), 'col4': '% of all proteins'})
+    rows.append({'col1':'All PSMs', 'col2': numPSMs, 'col3':'', 'col4':''})
+    rows.append({'col1':'PSMs with Consensus Motif', 'col2': numSCMpsms, 'col3': "{:.2f}".format((numSCMpsms/numPSMs)*100), 'col4': '% of all PSMs'})
+    rows.append({'col1':'Non-Specific Binding PSMs', 'col2': numNSBpsms, 'col3': "{:.2f}".format((numNSBprots/numPSMs)*100), 'col4': '% of all PSMs'})
+    rows.append({'col1':'Proteins with just one SCM PSM', 'col2': numOnePSM, 'col3':'', 'col4':''})
     df = pd.DataFrame(rows)
     return(df)
 
@@ -214,11 +214,11 @@ def cScIFTING(df):
     dfspecificity = makeSpecRpt(len(scmprots), len(nsbprots), len(scmpsms), len(nsbpsms), totOneSCMPSM )
     r = []
     if reagent['P21163'] > 0:
-        r.append( {'Total PSMs': reagent['P21163'], 'Accession': 'P21163'})
+        r.append( {'Total PSMs': reagent['P21163'], 'Accession': 'P21163', 'Reagent': 'PNGase F'})
     if reagent['P22629'] > 0:
-        r.append( {'Total PSMs': reagent['P22629'], 'Accession': 'P22629'})
+        r.append( {'Total PSMs': reagent['P22629'], 'Accession': 'P22629', 'Reagent': 'Streptavidin'})
     if reagent['P00761'] > 0:
-        r.append( {'Total PSMs': reagent['P00761'], 'Accession': 'P00761'})
+        r.append( {'Total PSMs': reagent['P00761'], 'Accession': 'P00761', 'Reagent': 'Trypsin'})
     dfreagent = pd.DataFrame(r)
 
     return( dfscmprot, dfnsbprot, dfscmpep, dfnsbpep, dfscmpsm, dfnsbpsm, dfmiape, dfreagent, dfmotif, dfspecificity)

@@ -13,7 +13,7 @@ library(ggplot2)
 library(ggrepel)
 
 
-options(shiny.maxRequestSize = 100*1024^2)
+options(shiny.maxRequestSize = 50*1024^2)
 source('functions.R')
 
 ###############################################################################
@@ -200,8 +200,10 @@ shinyServer(function(input, output, session) {
           cscfile = paste0(fn, '_Veneer.xlsx')
           protterfile = paste0(fn, '_protter.tsv')
           protter <- rbind(protter, p[[13]])
-          l = list("SCM Proteins"=p[[1]], "SCM - Filtered"=p[[15]], "NSB Proteins"=p[[2]], "SCM Peptides"=p[[3]], "NSB Peptides"=p[[4]], "SCM PSMs"=p[[5]], "NSB PSMs"=p[[6]], "MIAPE"=p[[7]], "Reagent Analysis"=p[[8]], "Motif Analysis"=p[[9]], "Specificity"=p[[10]], "GO Terms"=p[[11]], "Keywords"=p[[12]])
+#          l = list("SCM Proteins"=p[[1]], "SCM - Filtered"=p[[15]], "NSB Proteins"=p[[2]], "SCM Peptides"=p[[3]], "NSB Peptides"=p[[4]], "SCM PSMs"=p[[5]], "NSB PSMs"=p[[6]], "MIAPE"=p[[7]], "Reagent Analysis"=p[[8]], "Motif Analysis"=p[[9]], "Specificity"=p[[10]], "GO Terms"=p[[11]], "Keywords"=p[[12]])
+          l = list("SCM Proteins"=p[[1]], "SCM - Filtered"=p[[15]], "NSB Proteins"=p[[2]], "SCM Peptides"=p[[3]], "NSB Peptides"=p[[4]], "SCM PSMs"=p[[5]], "NSB PSMs"=p[[6]], "Reagent Analysis"=p[[8]], "Motif Analysis"=p[[9]], "Specificity"=p[[10]], "GO Terms (Uniprot)"=p[[11]], "Keywords (Uniprot)"=p[[12]])
           write.xlsx(l, cscfile, colNames=c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE))
+          write.xlsx(l, cscfile, colNames=c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE))
           protterout <- protterfy( p[[13]] )
           write.table(protterout, protterfile, row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
 

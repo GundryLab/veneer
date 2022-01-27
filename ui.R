@@ -30,7 +30,7 @@ shinyUI(navbarPage("", id="main", theme = "bootstrap.css",
        Veneer rapidly processes search results to filter out non-specific binders and annotate data with 
        information from >10 resources"),
     p("Veneer was written in Python and R and the web application was developed using the Shiny library. Source 
-       code and all reference lookup tables are publicly available at ", tags$a(href="https:github.com/GundryLab/veneer", "GitHub"), "."),
+       code and all reference lookup tables are publicly available at ", tags$a(href="https://github.com/GundryLab/veneer", "GitHub"), "."),
 
     br(), 
     #     div(style="width:20%;display:block;margin-left:auto;margin-right:auto",

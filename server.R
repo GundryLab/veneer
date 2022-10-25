@@ -164,10 +164,15 @@ shinyServer(function(input, output, session) {
       exp <- names(data_input())[i] 
       scm <- length(p[[1]][,1])
       nsb <- length(p[[2]][,1])
-      s <- c( s, c(exp, scm, nsb) )
+      pctProt <- p[[10]][2,3]
+      pctPSM <- p[[10]][5,3]
+      pngasef <- p[[8]][1,1]
+      strep <- p[[8]][2,1]
+      tryp <- p[[8]][3,1]
+      s <- c( s, c(exp, scm, nsb, pctProt, pctPSM, pngasef, strep, tryp) )
     }
-    df <- data.frame(matrix(s,ncol=3, byrow=TRUE))
-    colnames(df) <- c('Experiment', 'SCM', 'NSB')
+    df <- data.frame(matrix(s,ncol=8, byrow=TRUE))
+    colnames(df) <- c('Experiment', 'SCM Proteins', 'NSB Proteins', '%Protein Specificity', '%PSM Specificity', 'PNGaseF PSMs', 'Streptavidin PSMs', 'Trypsin PSMs' )
     df
   })
   

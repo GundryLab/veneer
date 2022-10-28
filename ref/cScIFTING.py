@@ -15,6 +15,16 @@ def findSCM(seq):
     else:
         return(0)
 
+def findDeamination(seq):
+    seq = re.sub('\[|\]', '', seq)
+    seq = re.split('\.', seq )[1] +  re.split('\.', seq )[2]
+    l = re.findall('nG', seq)
+    if l:
+        return(l)
+    else:
+        return (0)
+
+
 def convertSeq(seq):
     seq = re.split('\.', seq )[1]
     seq = seq.upper()
@@ -91,6 +101,7 @@ def cScIFTING(df):
                     proteins[accession]['countPSMs'] = 0
                     proteins[accession]['countSCM'] = 0
                     proteins[accession]['hasSCM'] = 0
+                    proteins[accession]['countNG'] = 0
                     proteins[accession]['exclusive'] = 0
                     proteins[accession]['countPeps'] = 0
                     proteins[accession]['PSMs'] = []
@@ -106,6 +117,12 @@ def cScIFTING(df):
                 else:
                     psm['hasSCM'] = 0
                 proteins[accession]['countSCM'] += psm['hasSCM']
+                nG = findDeamination(psm['Annotated Sequence'])
+                if nG:
+                    psm['hasNG'] = 1
+                else:
+                    psm['hasNG'] = 0
+                proteins[accession]['countNG'] += psm['hasNG']
                 if not re.search(';', MPA):
                     proteins[accession]['exclusive'] += 1
                 if re.search('-', accession):
@@ -131,10 +148,12 @@ def cScIFTING(df):
                     proteins[accession]['Peptides'][pepSeq]['origMPA'] = MPA
                     proteins[accession]['Peptides'][pepSeq]['countPSMs'] = 0
                     proteins[accession]['Peptides'][pepSeq]['countSCM'] = 0
+                    proteins[accession]['Peptides'][pepSeq]['countNG'] = 0
 #                    proteins[accession]['Peptides'][pepSeq]['AnnSeq'] = psm['Annotated Sequence']
                     proteins[accession]['countPeps'] += 1
                 proteins[accession]['Peptides'][pepSeq]['countPSMs'] += 1
                 proteins[accession]['Peptides'][pepSeq]['countSCM'] += psm['hasSCM']
+                proteins[accession]['Peptides'][pepSeq]['countNG'] += psm['hasNG']
 
     nsbprots = []
     scmprots = []
@@ -170,6 +189,7 @@ def cScIFTING(df):
                 pep['hasSCM'] = 1
             else:
                 pep['hasSCM'] = 0
+            pep['hasNG'] = proteins[accession]['Peptides'][pepSeq]['countNG']
             freshPep = pep.copy()
             if proteins[accession]['countSCM']:
                 scmpeps.append(freshPep)
@@ -192,6 +212,10 @@ def cScIFTING(df):
         else:
             prot['SCMonePSM'] = 0
 #        prot['SCMonePSM'] = 1 if proteins[accession]['countSCM'] == 1 else 0
+        if proteins[accession]['countNG']:
+            prot['hasNG'] = 1
+        else:
+            prot['hasNG'] = 0
         if proteins[accession]['countSCM']:
             scmprots.append(prot)
         else:

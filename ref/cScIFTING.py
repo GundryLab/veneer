@@ -189,7 +189,7 @@ def cScIFTING(df):
                 pep['hasSCM'] = 1
             else:
                 pep['hasSCM'] = 0
-            pep['hasNG'] = proteins[accession]['Peptides'][pepSeq]['countNG']
+            pep['countNG'] = proteins[accession]['Peptides'][pepSeq]['countNG']
             freshPep = pep.copy()
             if proteins[accession]['countSCM']:
                 scmpeps.append(freshPep)
@@ -212,10 +212,11 @@ def cScIFTING(df):
         else:
             prot['SCMonePSM'] = 0
 #        prot['SCMonePSM'] = 1 if proteins[accession]['countSCM'] == 1 else 0
-        if proteins[accession]['countNG']:
-            prot['hasNG'] = 1
-        else:
-            prot['hasNG'] = 0
+        # if proteins[accession]['countNG']:
+        #     prot['hasNG'] = 1
+        # else:
+        #     prot['hasNG'] = 0
+        prot['countNG'] = proteins[accession]['countNG']
         if proteins[accession]['countSCM']:
             scmprots.append(prot)
         else:

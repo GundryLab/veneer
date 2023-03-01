@@ -60,7 +60,49 @@ def makeSpecRpt(numSCMprots, numNSBprots, numSCMpsms, numNSBpsms, numOnePSM ):
     df = pd.DataFrame(rows)
     return(df)
 
+def badPSMs(df):
+    uniqIDs = {}
+    badIDs = []
+    for psm in df.to_dict('records'):
+        id = str(psm['First Scan']) + '|' + psm['Spectrum File']
+        if id in uniqIDs.keys():
+            if convertSeq(psm['Annotated Sequence']) != uniqIDs[id]['AnnSeq'] or psm['Master Protein Accessions'] != uniqIDs[id]['MPA']:
+                badIDs.append(id)
+            else:
+                continue
+        else:
+            uniqIDs[id]= {}
+            uniqIDs[id]['AnnSeq'] = convertSeq( psm['Annotated Sequence'] )
+            uniqIDs[id]['MPA'] = psm['Master Protein Accessions']
+    return(badIDs)
+
+################################################################################
+#
+# In many of our experiments, we use two search engines in Proteome Discoverer
+# to find PSMs.  This means that one detection event sometimes turns into two
+# PSMs in the results.  "Duplicate" PSMs can be identified by having the same
+# Scan Number and Spectrum File.  Specifically, we do not wish to double cocunt
+# them for the purposes of PSM counts, spontaneous deamidation, etc.  But we do
+# wish to report them in the results.
+#
+# To accomplish this, as we loop through the PSMs in the input file, I keep
+# which track of Scan Number/Spectrum File we've seen.  If it is the first time,
+# I assign it a value of 1 (and set it in the psm['value'] field) for the
+# purpose of counting PSMs/Peptides/Proteins. If I have seen the PSM before,
+# then the value is set to zero for the purposes of counting, etc.
+#
+# Also, some PSMs found by both search engines may disagree on the sequence or
+# on the MPA assignment.  If the two search engines cannot agree on both the
+# sequence and MPA, thne I throw the diasagreeing PSMs  out.
+################################################################################
+
 def cScIFTING(df):
+    # If you run this script from python, Pandas reads the data and the "First Scan
+    # field has a type of int.  If you read it in R using the readxl library the
+    # type is float.  I don't think it matters, but to be safe since I have
+    # fewer troubles running this from python/pandas, I convert to int.
+    df[["First Scan"]] = df[["First Scan"]].astype(int)
+    # now that that is out of the way, let's begin
     prtc = []
     reagent = {'P21163' : 0, 'P22629' : 0, 'P00761' : 0}
     proteins = {}
@@ -70,31 +112,51 @@ def cScIFTING(df):
     totPSMs = 0
     totMotif = {'S':0, 'C':0, 'T':0, 'V':0}
     totOneSCMPSM = 0
+    uniqPSMs = {}
+
+    baddies = badPSMs(df)
 
     for psm in df.to_dict('records'):
-#        print(psm.keys())
+        id = str(psm['First Scan']) + '|' + psm['Spectrum File']
+        # remove the bad PSMs from the process
+        if id in baddies:
+            continue
+        # This is where I keep track of the PSM ids to see if it is a Duplicate
+        # or not.  Everything runs as normal.  The only difference is the value
+        # field.  If it is the first time we have seen the PSM, then the value
+        # is 1 and the summing fields (numPSM, numPSMwSCM, etc) tabulate as
+        # normal.  If the PSM has been seen before, do not count it in the
+        # summing fields by setting the value to 0
+        if id in uniqPSMs.keys():
+            psm['value'] = 0
+        else:
+            psm['value'] = 1
+            uniqPSMs[id] = 1
+
         MPA = psm['Master Protein Accessions']
         #MIAPE stuff
         m = { key:value for key,value in psm.items() if key in miape_fields}
         miape.append(m)
         #main loop
-        if MPA == 'Master Protein Accessions' or MPA == '':
-#        if MPA == 'Master Protein Accessions' or MPA == '' or MPA == 'NA':
-            next
+        # once again, there is a difference between python/pandas and R/readxl.
+        # if reading from python/pandas, the blank MPAs are nan.  From
+        # R/readxl, it is empty string - ''
+        if MPA == 'Master Protein Accessions' or MPA == '' or pd.isna(MPA):
+            continue
         elif re.search('PRTC', MPA):
             prtc.append(psm)
-            next
+            continue
         elif re.search('P21163', MPA):
-            reagent['P21163'] += 1
-            next
+            reagent['P21163'] += psm['value']
+            continue
         elif re.search('P22629', MPA):
-            reagent['P22629'] += 1
-            next
+            reagent['P22629'] += psm['value']
+            continue
         elif re.search('P00761', MPA):
-            reagent['P00761'] += 1
-            next
+            reagent['P00761'] += psm['value']
+            continue
         else:
-            totPSMs += 1
+            totPSMs += psm['value']
             for accession in MPA.split('; '):  #I should probably split on ; and then strip the spaces
                 if accession not in proteins:
                     proteins[accession] = {}
@@ -107,30 +169,29 @@ def cScIFTING(df):
                     proteins[accession]['PSMs'] = []
                     proteins[accession]['Peptides'] = {}
                 pepSeq = convertSeq(psm['Annotated Sequence'])
-                proteins[accession]['countPSMs'] += 1
+                proteins[accession]['countPSMs'] += psm['value']
                 motifs = findSCM(psm['Annotated Sequence'])
                 if motifs:
                     psm['hasSCM'] = 1
                     for motif in motifs:
                         motif.upper()
-                        totMotif[motif[-1].upper()] += 1
+                        totMotif[motif[-1].upper()] += psm['value']
                 else:
                     psm['hasSCM'] = 0
-                proteins[accession]['countSCM'] += psm['hasSCM']
+                proteins[accession]['countSCM'] += psm['hasSCM'] * psm['value']
                 nG = findDeamination(psm['Annotated Sequence'])
                 if nG:
                     psm['hasNG'] = 1
                 else:
                     psm['hasNG'] = 0
-                proteins[accession]['countNG'] += psm['hasNG']
+                proteins[accession]['countNG'] += psm['hasNG'] * psm['value']
                 if not re.search(';', MPA):
-                    proteins[accession]['exclusive'] += 1
+                    proteins[accession]['exclusive'] += psm['value']
                 if re.search('-', accession):
                     (noIso, iso) = accession.split('-')
                 else:
                     (noIso, iso) = (accession, '')
                 proteins[accession]['MPAnoIso'] = noIso
-#                proteins[accession]['MPAiso'] = iso
                 psm['pepSeq'] = pepSeq
                 psm['annSeq'] = psm['Annotated Sequence']
                 psm['MPAnonSplit'] = MPA
@@ -142,7 +203,6 @@ def cScIFTING(df):
                 # add a new PSM, the PSM will change in all proteins
                 freshPSM = psm.copy()
                 proteins[accession]['PSMs'].append(freshPSM)
-#                proteins[accession]['PSMs'].append(psm)
                 if pepSeq not in proteins[accession]['Peptides']:
                     proteins[accession]['Peptides'][pepSeq] = {}
                     proteins[accession]['Peptides'][pepSeq]['origMPA'] = MPA
@@ -151,9 +211,12 @@ def cScIFTING(df):
                     proteins[accession]['Peptides'][pepSeq]['countNG'] = 0
 #                    proteins[accession]['Peptides'][pepSeq]['AnnSeq'] = psm['Annotated Sequence']
                     proteins[accession]['countPeps'] += 1
-                proteins[accession]['Peptides'][pepSeq]['countPSMs'] += 1
-                proteins[accession]['Peptides'][pepSeq]['countSCM'] += psm['hasSCM']
-                proteins[accession]['Peptides'][pepSeq]['countNG'] += psm['hasNG']
+                # I multiply the hasSCM and hasNG fields by the value field
+                # (which is 0 or 1) in order not to overcount the hasSCM and
+                # hasNG fields
+                proteins[accession]['Peptides'][pepSeq]['countPSMs'] += psm['value']
+                proteins[accession]['Peptides'][pepSeq]['countSCM'] += psm['hasSCM'] * psm['value']
+                proteins[accession]['Peptides'][pepSeq]['countNG'] += psm['hasNG'] * psm['value']
 
     nsbprots = []
     scmprots = []
@@ -245,5 +308,8 @@ def cScIFTING(df):
 #    if reagent['P00761'] > 0:
     r.append( {'Total PSMs': reagent['P00761'], 'Accession': 'P00761', 'Reagent': 'Trypsin'})
     dfreagent = pd.DataFrame(r)
-
     return( dfscmprot, dfnsbprot, dfscmpep, dfnsbpep, dfscmpsm, dfnsbpsm, dfmiape, dfreagent, dfmotif, dfspecificity)
+#    return( dfscmprot, dfnsbprot, dfscmpep, dfnsbpep, dfscmpsm, dfnsbpsm, dfmiape, dfreagent, dfmotif, dfspecificity)
+#xl = pd.read_excel('/home/jack/work/visun/Done/vSMC (5)/KB32.xlsx', engine='openpyxl')
+#xl = pd.read_excel('/home/jack/work/Projects/veneer/ref/sample2.xlsx', engine='openpyxl')
+#output = cScIFTING(xl)

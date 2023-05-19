@@ -18,7 +18,7 @@ def findSCM(seq):
 def findDeamination(seq):
     seq = re.sub('\[|\]', '', seq)
     seq = re.split('\.', seq )[1] +  re.split('\.', seq )[2]
-    l = re.findall('nG', seq)
+    l = re.findall('n[g|G][C|S|T|V|c|s|t|v]', seq)
     if l:
         return(l)
     else:
@@ -60,7 +60,39 @@ def makeSpecRpt(numSCMprots, numNSBprots, numSCMpsms, numNSBpsms, numOnePSM ):
     df = pd.DataFrame(rows)
     return(df)
 
+def getFilterInfo():
+    dict = {}
+    with open('ref/filter.csv', 'r') as fo:
+        fo.readline() # ignore header
+        for line in fo:
+            line = line.rstrip()
+            (accession, PredSi, SignalP, Phobius, SPC, cirfess) = line.split(',')
+            dict[accession] = {}
+            dict[accession]['PredSi'] = PredSi
+            dict[accession]['SignalP'] = SignalP
+            dict[accession]['Phobius'] = Phobius
+            dict[accession]['SPC'] = int(SPC)
+            dict[accession]['cirfess'] = int(cirfess)
+    fo.close()
+    return dict
+
+def filterable(d, accession):
+    if accession not in d.keys():
+      return 0
+    
+    if d[accession]['cirfess'] > 0:
+        return 1
+    elif d[accession]['PredSi'] == 'Yes' or d[accession]['PredSi'] == 'Yes' or d[accession]['PredSi'] == 'Yes':
+        return 1
+    elif d[accession]['SPC'] >= 3:
+        return 1
+    else:
+        return 0
+
+
+
 def cScIFTING(df):
+    filterInfo = getFilterInfo()
     prtc = []
     reagent = {'P21163' : 0, 'P22629' : 0, 'P00761' : 0}
     proteins = {}
@@ -78,7 +110,7 @@ def cScIFTING(df):
         m = { key:value for key,value in psm.items() if key in miape_fields}
         miape.append(m)
         #main loop
-        if MPA == 'Master Protein Accessions' or MPA == '':
+        if MPA == 'Master Protein Accessions' or MPA == '' or pd.isna(MPA):
 #        if MPA == 'Master Protein Accessions' or MPA == '' or MPA == 'NA':
             next
         elif re.search('PRTC', MPA):
@@ -191,7 +223,7 @@ def cScIFTING(df):
                 pep['hasSCM'] = 0
             pep['countNG'] = proteins[accession]['Peptides'][pepSeq]['countNG']
             freshPep = pep.copy()
-            if proteins[accession]['countSCM']:
+            if proteins[accession]['countSCM'] and filterable(filterInfo, proteins[accession]['MPAnoIso']):
                 scmpeps.append(freshPep)
             else:
                 nsbpeps.append(freshPep)
@@ -217,13 +249,13 @@ def cScIFTING(df):
         # else:
         #     prot['hasNG'] = 0
         prot['countNG'] = proteins[accession]['countNG']
-        if proteins[accession]['countSCM']:
+        if proteins[accession]['countSCM'] and filterable(filterInfo, proteins[accession]['MPAnoIso']):
             scmprots.append(prot)
         else:
             nsbprots.append(prot)
 
         for psm in proteins[accession]['PSMs']:
-            if proteins[accession]['countSCM']:
+            if proteins[accession]['countSCM'] and filterable(filterInfo, proteins[accession]['MPAnoIso']):
                 scmpsms.append(psm)
             else:
                 nsbpsms.append(psm)
@@ -247,3 +279,8 @@ def cScIFTING(df):
     dfreagent = pd.DataFrame(r)
 
     return( dfscmprot, dfnsbprot, dfscmpep, dfnsbpep, dfscmpsm, dfnsbpsm, dfmiape, dfreagent, dfmotif, dfspecificity)
+
+#xl = pd.read_excel('/home/jack/work/Projects/src/VeneerNG/ref/test.xlsx', engine='openpyxl')
+#xl = pd.read_excel('/home/jack/work/visun/Done/vSMC (5)/KB32.xlsx', engine='openpyxl')
+#xl = pd.read_excel('/home/jack/work/Projects/veneer/ref/0945_Simone_20200815_100_120_KB32.xlsx', engine='openpyxl')
+#output = cScIFTING(xl)

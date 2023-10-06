@@ -76,9 +76,9 @@ shinyServer(function(input, output, session) {
 #        print(moreparts)
         fn <- moreparts[length(moreparts)]
         if(ext == "csv"){
-          df <- read.csv(files[i], header=TRUE)
+          df <- read.csv(files[i], header=TRUE, check.names=FALSE)
         } else if(ext=="txt" || ext=="tsv" || ext=="tab") {
-          df <- read.delim(files[i], header=TRUE)
+          df <- read.delim(files[i], header=TRUE, check.names=FALSE)
         } else if(ext=="xlsx" || ext=="xls") {
           # use the readxl library instead of openxlsx. openxlsx seems to have
           # a hard time reading xl files output by PD.

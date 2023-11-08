@@ -45,18 +45,19 @@ def makeMotifRpt(motifs):
     df = pd.DataFrame(rows)
     return(df)
 
-def makeSpecRpt(numSCMprots, numNSBprots, numSCMpsms, numNSBpsms, numOnePSM ):
+def makeSpecRpt(numSCMprots, numNSBprots, numSCMpsms, numNSBpsms, numOnePSM, totSCMnG ):
     rows = []
     numProts = numSCMprots + numNSBprots
     numPSMs = numSCMpsms + numNSBpsms
 #    tot = motifs['NXS'] + motifs['NXC'] + motifs['NXT'] + motifs['NXV']
     rows.append({'col1':'All Proteins', 'col2': numProts, 'col3':'', 'col4':''})
-    rows.append({'col1':'Proteins with Consensus Motif', 'col2': numSCMprots, 'col3': "{:.2f}".format((numSCMprots/numProts)*100), 'col4': '% of all proteins'})
+    rows.append({'col1':'Proteins with SCM', 'col2': numSCMprots, 'col3': "{:.2f}".format((numSCMprots/numProts)*100), 'col4': '% of all proteins'})
     rows.append({'col1':'Non-Specific Binding Proteins', 'col2': numNSBprots, 'col3': "{:.2f}".format((numNSBprots/numProts)*100), 'col4': '% of all proteins'})
     rows.append({'col1':'All PSMs', 'col2': numPSMs, 'col3':'', 'col4':''})
-    rows.append({'col1':'PSMs with Consensus Motif', 'col2': numSCMpsms, 'col3': "{:.2f}".format((numSCMpsms/numPSMs)*100), 'col4': '% of all PSMs'})
+    rows.append({'col1':'PSMs with SCM', 'col2': numSCMpsms, 'col3': "{:.2f}".format((numSCMpsms/numPSMs)*100), 'col4': '% of all PSMs'})
     rows.append({'col1':'Non-Specific Binding PSMs', 'col2': numNSBpsms, 'col3': "{:.2f}".format((numNSBpsms/numPSMs)*100), 'col4': '% of all PSMs'})
     rows.append({'col1':'Proteins with just one SCM PSM', 'col2': numOnePSM, 'col3':'', 'col4':''})
+    rows.append({'col1':'# PSM with n-G-S/T/C/V in SCM', 'col2': totSCMnG, 'col3':'', 'col4':''})
     df = pd.DataFrame(rows)
     return(df)
 
@@ -79,7 +80,7 @@ def getFilterInfo():
 def filterable(d, accession):
     if accession not in d.keys():
       return 0
-    
+
     if d[accession]['cirfess'] > 0:
         return 1
     elif d[accession]['PredSi'] == 'Yes' or d[accession]['PredSi'] == 'Yes' or d[accession]['PredSi'] == 'Yes':
@@ -194,6 +195,8 @@ def cScIFTING(df):
     nsbpsms = []
     scmpsms = []
 
+    totSCMnG = 0
+
     for accession in proteins:
         prot={}
         pepCount = 0
@@ -208,15 +211,16 @@ def cScIFTING(df):
             pep['MPAnonSplit'] = proteins[accession]['Peptides'][pepSeq]['origMPA']
             pep['numMPA'] = len(pep['MPAnonSplit'].split(';'))
             pep['protPSMs'] = proteins[accession]['countPSMs']
-            pep['protPctPSMs'] = proteins[accession]['countPSMs'] / totPSMs #proteins[accession]['totPSM']
+#            pep['protPctPSMs'] = proteins[accession]['countPSMs'] / totPSMs #proteins[accession]['totPSM']
+            pep['protPctPSMs'] = round( proteins[accession]['Peptides'][pepSeq]['countPSMs'] / proteins[accession]['countPSMs'], 2) #/ totPSMs #proteins[accession]['totPSM']
             pep['protExclusive'] = proteins[accession]['exclusive']
-            pep['protPctExclusive'] = proteins[accession]['exclusive'] / proteins[accession]['countPSMs']
+            pep['protPctExclusive'] = round( proteins[accession]['exclusive'] / proteins[accession]['countPSMs'], 2 )
             pep['protPSMsSCM'] = proteins[accession]['countSCM']
-            pep['protPctPSMsSCM'] = proteins[accession]['countSCM'] / proteins[accession]['countPSMs']
+            pep['protPctPSMsSCM'] = round( proteins[accession]['countSCM'] / proteins[accession]['countPSMs'], 2)
             pep['protSCMonePSM'] = 1 if proteins[accession]['countSCM'] == 1 else 0
             pep['pepPSM'] = proteins[accession]['Peptides'][pepSeq]['countPSMs']
             pep['pepPSMwSCM'] = proteins[accession]['Peptides'][pepSeq]['countSCM']
-            pep['pctPepPSMwSCM'] = pep['pepPSMwSCM'] / pep['pepPSM']
+            pep['pctPepPSMwSCM'] = round( pep['pepPSMwSCM'] / pep['pepPSM'], 2 )
             if pep['pepPSMwSCM']:
                 pep['hasSCM'] = 1
             else:
@@ -235,9 +239,9 @@ def cScIFTING(df):
         prot['numPSM'] = proteins[accession]['countPSMs']  #proteins[accession]['totPSM']
 #        prot['pctPSM'] = proteins[accession]['countPSMs'] / totPSMs #proteins[accession]['totPSM']
         prot['psmExclusive'] = proteins[accession]['exclusive']
-        prot['pctExclusive'] = proteins[accession]['exclusive'] / proteins[accession]['countPSMs']
+        prot['pctExclusive'] = round( proteins[accession]['exclusive'] / proteins[accession]['countPSMs'], 2 )
         prot['PSMwSCM'] = proteins[accession]['countSCM']
-        prot['pctPSMwSCM'] = proteins[accession]['countSCM'] / proteins[accession]['countPSMs']
+        prot['pctPSMwSCM'] = round( proteins[accession]['countSCM'] / proteins[accession]['countPSMs'], 2 )
         if proteins[accession]['countSCM'] == 1:
             prot['SCMonePSM'] = 1
             totOneSCMPSM += 1
@@ -251,6 +255,9 @@ def cScIFTING(df):
         prot['countNG'] = proteins[accession]['countNG']
         if proteins[accession]['countSCM'] and filterable(filterInfo, proteins[accession]['MPAnoIso']):
             scmprots.append(prot)
+            # this is to count the number of nG for all SMC proteins that we report in the
+            # output spreadsheet, on the veneer results screen, and in CSC_Log
+            totSCMnG += prot['countNG']
         else:
             nsbprots.append(prot)
 
@@ -268,7 +275,7 @@ def cScIFTING(df):
     dfnsbpsm = pd.DataFrame(nsbpsms)
     dfmiape = pd.DataFrame(miape)
     dfmotif = makeMotifRpt(totMotif)
-    dfspecificity = makeSpecRpt(len(scmprots), len(nsbprots), len(scmpsms), len(nsbpsms), totOneSCMPSM )
+    dfspecificity = makeSpecRpt(len(scmprots), len(nsbprots), len(scmpsms), len(nsbpsms), totOneSCMPSM, totSCMnG )
     r = []
 #    if reagent['P21163'] > 0:
     r.append( {'Total PSMs': reagent['P21163'], 'Accession': 'P21163', 'Reagent': 'PNGase F'})
@@ -278,7 +285,7 @@ def cScIFTING(df):
     r.append( {'Total PSMs': reagent['P00761'], 'Accession': 'P00761', 'Reagent': 'Trypsin'})
     dfreagent = pd.DataFrame(r)
 
-    return( dfscmprot, dfnsbprot, dfscmpep, dfnsbpep, dfscmpsm, dfnsbpsm, dfmiape, dfreagent, dfmotif, dfspecificity)
+    return( dfscmprot, dfnsbprot, dfscmpep, dfnsbpep, dfscmpsm, dfnsbpsm, dfmiape, dfreagent, dfmotif, dfspecificity, totSCMnG)
 
 #xl = pd.read_excel('/home/jack/work/Projects/src/VeneerNG/ref/test.xlsx', engine='openpyxl')
 #xl = pd.read_excel('/home/jack/work/visun/Done/vSMC (5)/KB32.xlsx', engine='openpyxl')

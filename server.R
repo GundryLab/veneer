@@ -94,12 +94,26 @@ shinyServer(function(input, output, session) {
         #      xl <- read.xlsx(input$userfile1$datapath, sep.names=" ", na.strings="")
         #      print("read file")
         df[is.na(df)] <- "" # R likes NA.  I don't
+        # need an id column to allow joining information later. See comment immediately below
+        df['ID'] <- seq.int(nrow(df))
         
         # call the python script to do the cScIFTING
         # p is a list of data frames -p1, p2 are SCM and NSB proteins
         # p3, p4 are SCM nad NSB peptides. p5, p6 are the SCM and NSB PSMs
         # p7 - MIAPE, p8 - Reagent Analysis, p9 - Motif Analysis p10 - Specificity
-        p <- cScIFTING(df)
+       ## 11/6/23 I have added an 11th item - the number of nG (spontaneous deamidations)
+        # I put that value into a variable then removed that column from the p dataframe
+        # because it throws the list index numbers off everywhere else that I have been using
+       ## Also, I am only feeding in the two columns cScIFTING uses from the input PD
+        # spreadsheet to save memory.  I will need to put the information back into the 
+        # PSM tabs in the output spreadsheet.  The ID column is used for this purpose
+        p <- cScIFTING( df[c('ID', 'Master Protein Accessions', 'Annotated Sequence')] )
+        nG <- p[[11]]
+        p[length(p)] <- NULL
+        
+        # add a column displaying the % of SCMs that are nG 
+        # simply divide nG column by SCM column
+        p[[1]]['pctNG'] <- round(p[[1]]['countNG']/p[[1]]['PSMwSCM'], 2)
         
         if(typeof(annotation) == "character"){
 #          print("at first annotation reading")
@@ -109,6 +123,12 @@ shinyServer(function(input, output, session) {
         p[[1]]<-join(p[[1]], annotation, by=c("MPAnoIso"), type="left", match="first")
 #        print(colnames(p[[1]]))
         p[[2]]<-join(p[[2]], annotation, by=c("MPAnoIso"), type="left", match="first")
+        
+        # put the PSM information from the PD file back into the PSM spreadsheet tabs
+        p[[5]] <- join(p[[5]], df, type='left', match='first')
+        p[[5]]<-p[[5]][, !names(p[[5]]) %in% c("ID")]
+        p[[6]] <- join(p[[6]], df, type='left', match='first')
+        p[[6]]<-p[[6]][, !names(p[[6]]) %in% c("ID")]
         
         # perform the GO term analysis
         tdf <- as.data.frame(table(unlist(sapply(as.character(p[[1]]$Gene.Ontology..GO...Uniprot.),strsplit,split=';'),use.names=FALSE)))
@@ -146,6 +166,9 @@ shinyServer(function(input, output, session) {
 #        colnames(p[[14]])<-c('MPA')
 #        p[[15]]<-p[[1]][which(p[[1]]$cirfessScore!=0|p[[1]]$SPC==3|p[[1]]$SPC==4|p[[1]]$"Signal.Peptide..PredSi."=="Yes"|p[[1]]$"Signal.Peptide..SignalP."=="Yes"|p[[1]]$"Signal.Peptide..Phobius."=="Yes"),]
 #        p[[15]]<-p[[1]][which(p[[1]]$"Signal.Peptide..PredSi."=="Yes"),]
+        
+        #put nG back in there
+        p[[14]] <- nG
       })
       d[[fn]] <- p
     }
@@ -169,10 +192,11 @@ shinyServer(function(input, output, session) {
       pngasef <- p[[8]][1,1]
       strep <- p[[8]][2,1]
       tryp <- p[[8]][3,1]
-      s <- c( s, c(exp, scm, nsb, pctProt, pctPSM, pngasef, strep, tryp) )
+      nG <- p[[14]]
+      s <- c( s, c(exp, scm, nsb, pctProt, pctPSM, pngasef, strep, tryp, nG) )
     }
-    df <- data.frame(matrix(s,ncol=8, byrow=TRUE))
-    colnames(df) <- c('Experiment', 'SCM Proteins', 'NSB Proteins', '%Protein Specificity', '%PSM Specificity', 'PNGaseF PSMs', 'Streptavidin PSMs', 'Trypsin PSMs' )
+    df <- data.frame(matrix(s,ncol=9, byrow=TRUE))
+    colnames(df) <- c('Experiment', 'SCM Proteins', 'NSB Proteins', '%Protein Specificity', '%PSM Specificity', 'PNGaseF PSMs', 'Streptavidin PSMs', 'Trypsin PSMs', 'n-G-S/T/C/V' )
     df
   })
   

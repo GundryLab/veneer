@@ -13,7 +13,7 @@ library(ggplot2)
 library(ggrepel)
 
 
-options(shiny.maxRequestSize = 150*1024^2)
+# options(shiny.maxRequestSize = 150*1024^2)
 source('functions.R')
 
 ###############################################################################
@@ -66,7 +66,7 @@ shinyServer(function(input, output, session) {
     }
     for (i in seq_along(files)) {
       withProgress(message = paste0('Reading and Processing ', files[i]), value = 0, {
-#        print(files[i])
+        print(files[i])
         parts <- strsplit(files[i], "\\.")[[1]]
 #        print(parts)
         ext <- parts[length(parts)]
@@ -108,8 +108,11 @@ shinyServer(function(input, output, session) {
         # spreadsheet to save memory.  I will need to put the information back into the 
         # PSM tabs in the output spreadsheet.  The ID column is used for this purpose
         p <- cScIFTING( df[c('ID', 'Master Protein Accessions', 'Annotated Sequence')] )
-        nG <- p[[11]]
-        p[length(p)] <- NULL
+#        nG <- p[[11]]
+        nG <-sum(p[[1]]['countNG'])
+        tot <-sum(p[[1]]['PSMwSCM'])
+#        print(paste(nG, nG1, tot))
+#        p[length(p)] <- NULL
         
         # add a column displaying the % of SCMs that are nG 
         # simply divide nG column by SCM column
@@ -168,7 +171,8 @@ shinyServer(function(input, output, session) {
 #        p[[15]]<-p[[1]][which(p[[1]]$"Signal.Peptide..PredSi."=="Yes"),]
         
         #put nG back in there
-        p[[14]] <- nG
+        p[[14]] <- round((nG*100)/tot, 2)
+        print(p[[14]])
       })
       d[[fn]] <- p
     }

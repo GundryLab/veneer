@@ -285,7 +285,7 @@ def cScIFTING(df):
     r.append( {'Total PSMs': reagent['P00761'], 'Accession': 'P00761', 'Reagent': 'Trypsin'})
     dfreagent = pd.DataFrame(r)
 
-    return( dfscmprot, dfnsbprot, dfscmpep, dfnsbpep, dfscmpsm, dfnsbpsm, dfmiape, dfreagent, dfmotif, dfspecificity, totSCMnG)
+    return( dfscmprot, dfnsbprot, dfscmpep, dfnsbpep, dfscmpsm, dfnsbpsm, dfmiape, dfreagent, dfmotif, dfspecificity )
 
 #xl = pd.read_excel('/home/jack/work/Projects/src/VeneerNG/ref/test.xlsx', engine='openpyxl')
 #xl = pd.read_excel('/home/jack/work/visun/Done/vSMC (5)/KB32.xlsx', engine='openpyxl')

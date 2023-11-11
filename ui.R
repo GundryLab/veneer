@@ -91,7 +91,7 @@ shinyUI(navbarPage("", id="main", theme = "bootstrap.css",
       h4("Retrieve Results"),
       downloadButton("dlAnno", label = "Download"),
       textOutput("readerror"),
-      h4("Specificity"),
+      h4("Experiment Quality Metrics"),
       tableOutput('dtSummary')
     )
   ),

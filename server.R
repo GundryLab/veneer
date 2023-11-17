@@ -11,6 +11,7 @@ library(reshape2)
 library(data.table)
 library(ggplot2)
 library(ggrepel)
+#library(airtabler)
 
 
 options(shiny.maxRequestSize = 150*1024^2)
@@ -169,7 +170,6 @@ shinyServer(function(input, output, session) {
         
         #put nG back in there
         p[[14]] <- round((nG*100)/tot, 2)
-        print(p[[14]])
       })
       d[[fn]] <- p
     }
@@ -221,7 +221,8 @@ shinyServer(function(input, output, session) {
     },
     content = function(filename) {
       output$readerror <- renderText("")
-      withProgress(message = 'Writing Files', max=length(data_input())+1, value = 0, {
+      size <- length(data_input())+1
+      withProgress(message = 'Writing Files', max= size, value = 0, {
         protter <- setNames(data.frame(matrix(ncol = 3, nrow = 0)), c("ProteinName", "PeptideSequence", "PeptideModifiedSequence"))
         d <- data_input()
         for(i in 1:length( d )) {
@@ -237,7 +238,8 @@ shinyServer(function(input, output, session) {
           write.xlsx(l, cscfile, colNames=c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE))
           protterout <- protterfy( p[[13]] )
           write.table(protterout, protterfile, row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
-
+          incProgress (1) 
+          
           zip(zipfile=filename, files=c(cscfile, protterfile))
         }
       }) # end of withProgress

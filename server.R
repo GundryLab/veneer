@@ -124,6 +124,12 @@ shinyServer(function(input, output, session) {
         p[[1]]<-join(p[[1]], annotation, by=c("MPAnoIso"), type="left", match="first")
 #        print(colnames(p[[1]]))
         p[[2]]<-join(p[[2]], annotation, by=c("MPAnoIso"), type="left", match="first")
+
+        #Add specificity stuff
+        scmOnePSM <- sum(p[[1]]['SCMonePSM'])
+        nsbOnePSM <- sum(p[[2]]['SCMonePSM'])
+        p[[10]][7,2] <- scmOnePSM
+        p[[10]][8,2] <- nsbOnePSM
         
         # put the PSM information from the PD file back into the PSM spreadsheet tabs
         p[[5]] <- join(p[[5]], df, type='left', match='first')
@@ -194,10 +200,18 @@ shinyServer(function(input, output, session) {
       strep <- p[[8]][2,1]
       tryp <- p[[8]][3,1]
       nG <- p[[14]]
-      s <- c( s, c(exp, scm, nsb, pctProt, pctPSM, pngasef, strep, tryp, nG) )
+      nxt <- p[[9]][3,1]
+      nxs <- p[[9]][5,1]
+      nxc <- p[[9]][7,1]
+      nxv <- p[[9]][9,1]
+      scmOne <- sum(p[[1]]['SCMonePSM'])
+      nsbOne <- sum(p[[2]]['SCMonePSM'])
+      s <- c( s, c(exp, scm, nsb, pctProt, pctPSM, pngasef, strep, tryp, nxt, nxs, nxc, nxv, scmOne, nsbOne, nG) )
+      
+#      s <- c( s, c(exp, scm, nsb, pctProt, pctPSM, pngasef, strep, tryp, nG) )
     }
-    df <- data.frame(matrix(s,ncol=9, byrow=TRUE))
-    colnames(df) <- c('Experiment', 'SCM Proteins', 'NSB Proteins', '%Protein Specificity', '%PSM Specificity', 'PNGaseF PSMs', 'Streptavidin PSMs', 'Trypsin PSMs', 'n-G-S/T/C/V' )
+    df <- data.frame(matrix(s,ncol=15, byrow=TRUE))
+    colnames(df) <- c('Experiment', 'SCM Proteins', 'NSB Proteins', '%Protein Specificity', '%PSM Specificity', 'PNGaseF PSMs', 'Streptavidin PSMs', 'Trypsin PSMs', '% NXT', '% NXS', '% NXC', '% NXV', 'sequon One PSM', 'NSB One PSM', 'n-G-S/T/C/V' )
     df
   })
   

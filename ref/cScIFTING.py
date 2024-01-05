@@ -56,6 +56,8 @@ def makeSpecRpt(numSCMprots, numNSBprots, numSCMpsms, numNSBpsms, numOnePSM, tot
     rows.append({'col1':'All PSMs', 'col2': numPSMs, 'col3':'', 'col4':''})
     rows.append({'col1':'PSMs with SCM', 'col2': numSCMpsms, 'col3': "{:.2f}".format((numSCMpsms/numPSMs)*100), 'col4': '% of all PSMs'})
     rows.append({'col1':'Non-Specific Binding PSMs', 'col2': numNSBpsms, 'col3': "{:.2f}".format((numNSBpsms/numPSMs)*100), 'col4': '% of all PSMs'})
+    rows.append({'col1':'Sequon Proteins with just one PSM', 'col2': '', 'col3':'', 'col4':''})
+    rows.append({'col1':'NSB Proteins with just one PSM', 'col2': '', 'col3':'', 'col4':''})
     rows.append({'col1':'Proteins with just one SCM PSM', 'col2': numOnePSM, 'col3':'', 'col4':''})
     rows.append({'col1':'# PSM with n-G-S/T/C/V in SCM', 'col2': totSCMnG, 'col3':'', 'col4':''})
     df = pd.DataFrame(rows)
@@ -67,29 +69,36 @@ def getFilterInfo():
         fo.readline() # ignore header
         for line in fo:
             line = line.rstrip()
-            (accession, PredSi, SignalP, Phobius, SPC, cirfess) = line.split(',')
+            (accession, PredSi, SignalP, Phobius, SPC, cirfess, topology) = line.split(',')
             dict[accession] = {}
             dict[accession]['PredSi'] = PredSi
             dict[accession]['SignalP'] = SignalP
             dict[accession]['Phobius'] = Phobius
             dict[accession]['SPC'] = int(SPC)
             dict[accession]['cirfess'] = int(cirfess)
+            dict[accession]['topology'] = topology
     fo.close()
     return dict
 
 def filterable(d, accession):
     if accession not in d.keys():
-      return 0
-
-    if d[accession]['cirfess'] > 0:
-        return 1
-    elif d[accession]['PredSi'] == 'Yes' or d[accession]['PredSi'] == 'Yes' or d[accession]['PredSi'] == 'Yes':
-        return 1
-    elif d[accession]['SPC'] >= 3:
-        return 1
-    else:
         return 0
 
+    score = 0
+    if d[accession]['cirfess'] > 0 or d[accession]['PredSi'] == 'Yes' or d[accession]['SignalP'] == 'Yes' or d[accession]['Phobius'] == 'Yes' or d[accession]['SPC'] >= 3:
+        score += 2
+    if d[accession]['topology'] == 'Yes':
+        score += 3
+    return score
+
+    # if d[accession]['cirfess'] > 0:
+    #     return 1
+    # elif d[accession]['PredSi'] == 'Yes' or d[accession]['PredSi'] == 'Yes' or d[accession]['PredSi'] == 'Yes':
+    #     return 1
+    # elif d[accession]['SPC'] >= 3:
+    #     return 1
+    # else:
+    #     return 0
 
 
 def cScIFTING(df):
@@ -138,6 +147,12 @@ def cScIFTING(df):
                     proteins[accession]['exclusive'] = 0
                     proteins[accession]['countPeps'] = 0
                     proteins[accession]['PSMs'] = []
+                    proteins[accession]['T'] = 0
+                    proteins[accession]['S'] = 0
+                    proteins[accession]['C'] = 0
+                    proteins[accession]['V'] = 0
+                    proteins[accession]['Level of Evidence'] = ''
+                    proteins[accession]['Confidence Tier'] = ''                    
                     proteins[accession]['Peptides'] = {}
                 pepSeq = convertSeq(psm['Annotated Sequence'])
                 proteins[accession]['countPSMs'] += 1
@@ -146,6 +161,7 @@ def cScIFTING(df):
                     psm['hasSCM'] = 1
                     for motif in motifs:
                         motif.upper()
+                        proteins[accession][motif[-1].upper()] += 1
                         totMotif[motif[-1].upper()] += 1
                 else:
                     psm['hasSCM'] = 0
@@ -253,6 +269,50 @@ def cScIFTING(df):
         # else:
         #     prot['hasNG'] = 0
         prot['countNG'] = proteins[accession]['countNG']
+        numMotifs = proteins[accession]['T'] + proteins[accession]['S'] + proteins[accession]['C'] + proteins[accession]['V']
+        if numMotifs == 0 :
+            prot['countNXT'] = 0
+            prot['pctNXT'] = 0
+            prot['countNXS'] = 0
+            prot['pctNXS'] = 0
+            prot['countNXC'] = 0
+            prot['pctNXC'] = 0
+            prot['countNXV'] = 0
+            prot['pctNXV'] = 0
+        else :
+            prot['countNXT'] = proteins[accession]['T']
+            prot['pctNXT'] = proteins[accession]['T'] / numMotifs
+            prot['countNXS'] = proteins[accession]['S']
+            prot['pctNXS'] = proteins[accession]['S'] / numMotifs
+            prot['countNXC'] = proteins[accession]['C']
+            prot['pctNXC'] = proteins[accession]['C'] / numMotifs
+            prot['countNXV'] = proteins[accession]['V']
+            prot['pctNXV'] = proteins[accession]['V'] / numMotifs
+
+        if proteins[accession]['countSCM'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 2 :
+            prot['Level of Evidence'] = '2'
+            prot['Confidence Tier'] = 'Low'
+        elif proteins[accession]['countSCM'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 3 :
+            prot['Level of Evidence'] = '3'
+            prot['Confidence Tier'] = 'Low'
+        elif proteins[accession]['countSCM'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 5 :
+            prot['Level of Evidence'] = '2+3'
+            prot['Confidence Tier'] = 'Low'
+        elif proteins[accession]['countSCM'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 0 :
+            prot['Level of Evidence'] = '0'
+            prot['Confidence Tier'] = 'Low'
+        elif proteins[accession]['countSCM'] > 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 0 :
+            prot['Level of Evidence'] = '1'
+            prot['Confidence Tier'] = 'Low'
+        elif proteins[accession]['countSCM'] > 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 2 :
+            prot['Level of Evidence'] = '1+2'
+            prot['Confidence Tier'] = 'Medium'
+        elif proteins[accession]['countSCM'] and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 3 :
+            prot['Level of Evidence'] = '1+3'
+            prot['Confidence Tier'] = 'Medium'
+        elif proteins[accession]['countSCM'] and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 5 :
+            prot['Level of Evidence'] = '1+2+3'
+            prot['Confidence Tier'] = 'High'
         if proteins[accession]['countSCM'] and filterable(filterInfo, proteins[accession]['MPAnoIso']):
             scmprots.append(prot)
             # this is to count the number of nG for all SMC proteins that we report in the

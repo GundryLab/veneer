@@ -71,18 +71,18 @@ def getNG( df ):
     return tot
 
 #def makeSpecRpt(highprots, medprots, lowprots, noneprots, numhighpsms, nummedpsms, numlowpsms, numnonepsms, numOnePSM, totSCMnG ):
-def makeSpecRpt( highprots, medprots, lowprots, noneprots ):
+def makeSpecRpt( highprots, medprots, lowprots, zeroprots, numhighpsms, nummedpsms, numlowpsms, numzeropsms  ):
     rows = []
     numhighprots = len(highprots)
     nummedprots = len(medprots)
     numlowprots = len(lowprots)
-    numnoneprots = len(noneprots)
-    numProts = numhighprots + nummedprots + numlowprots + numnoneprots
-    numSequonProts = numhighprots + nummedprots + numlowprots
+    numzeroprots = len(zeroprots)
+    numProts = numhighprots + nummedprots + numlowprots + numzeroprots
+    numPSMs = numhighpsms + nummedpsms + numlowpsms + numzeropsms
     numOnePSMhigh = countOnePSM(highprots)
     numOnePSMmed = countOnePSM(medprots)
     numOnePSMlow = countOnePSM(lowprots)
-    numOnePSMnone = countOnePSM(noneprots)
+    numOnePSMzero = countOnePSM(zeroprots)
     ngHigh = getNG(highprots)
     ngMed = getNG(medprots)
     ngLow = getNG(highprots)
@@ -91,18 +91,31 @@ def makeSpecRpt( highprots, medprots, lowprots, noneprots ):
 
 #    tot = motifs['NXS'] + motifs['NXC'] + motifs['NXT'] + motifs['NXV']
 #    rows.append({'col1':'All Proteins', 'col2': numProts, 'col3':'', 'col4':''})
-    rows.append({'col1':'High Proteins with Sequon', 'col2': numhighprots, 'col3': "{:.2f}".format((numhighprots/numProts)*100), 'col4': '% of all proteins'})
-    rows.append({'col1':'Medium Proteins with Sequon', 'col2': nummedprots, 'col3': "{:.2f}".format((nummedprots/numProts)*100), 'col4': '% of all proteins'})
-    rows.append({'col1':'Low Proteins with Sequon', 'col2': numlowprots, 'col3': "{:.2f}".format((numlowprots/numProts)*100), 'col4': '% of all proteins'})
-    rows.append({'col1':'High Proteins with Sequon', 'col2': numnoneprots, 'col3': "{:.2f}".format((numnoneprots/numProts)*100), 'col4': '% of all proteins'})
+    rows.append({'col1':'High Proteins', 'col2': numhighprots, 'col3': "{:.2f}".format((numhighprots/numProts)*100), 'col4': '% of all proteins'})
+    rows.append({'col1':'Medium Proteins', 'col2': nummedprots, 'col3': "{:.2f}".format((nummedprots/numProts)*100), 'col4': '% of all proteins'})
+    if numzeroprots == 0:
+        rows.append({'col1':'Low Proteins', 'col2': numlowprots, 'col3': '---', 'col4': '% of all proteins'})
+    else:
+        rows.append({'col1':'Low Proteins', 'col2': numlowprots, 'col3': "{:.2f}".format((numlowprots/numProts)*100), 'col4': '% of all proteins'})
+    rows.append({'col1':'Zero Proteins', 'col2': numzeroprots, 'col3': "{:.2f}".format((numzeroprots/numProts)*100), 'col4': '% of all proteins'})
+    rows.append({'col1':'High PSMs', 'col2': numhighpsms, 'col3': "{:.2f}".format((numhighpsms/numPSMs)*100), 'col4': '% of all PSMs'})
+    rows.append({'col1':'Medium PSMs', 'col2': nummedpsms, 'col3': "{:.2f}".format((nummedpsms/numPSMs)*100), 'col4': '% of all PSMs'})
+    if numlowpsms == 0:
+        rows.append({'col1':'Low PSMs', 'col2': numlowpsms, 'col3': '---', 'col4': '% of all PSMs'})
+    else:
+        rows.append({'col1':'Low PSMs', 'col2': numlowpsms, 'col3': "{:.2f}".format((numlowpsms/numPSMs)*100), 'col4': '% of all PSMs'})
+    rows.append({'col1':'Zero PSMs', 'col2': numzeropsms, 'col3': "{:.2f}".format((numzeropsms/numPSMs)*100), 'col4': '% of all PSMs'})
 #    rows.append({'col1':'Non-Specific Binding Proteins', 'col2': numNSBprots, 'col3': "{:.2f}".format((numNSBprots/numProts)*100), 'col4': '% of all proteins'})
 #    rows.append({'col1':'All PSMs', 'col2': numPSMs, 'col3':'', 'col4':''})
 #    rows.append({'col1':'PSMs with SCM', 'col2': numSCMpsms, 'col3': "{:.2f}".format((numSCMpsms/numPSMs)*100), 'col4': '% of all PSMs'})
 #    rows.append({'col1':'Non-Specific Binding PSMs', 'col2': numNSBpsms, 'col3': "{:.2f}".format((numNSBpsms/numPSMs)*100), 'col4': '% of all PSMs'})
     rows.append({'col1':'High Proteins with just one PSM', 'col2': numOnePSMhigh, 'col3':"{:.2f}".format((numOnePSMhigh/numhighprots)*100), 'col4':'% of high proteins'})
     rows.append({'col1':'Medium Proteins with just one PSM', 'col2': numOnePSMmed, 'col3':"{:.2f}".format((numOnePSMmed/nummedprots)*100), 'col4':'% of med proteins'})
-    rows.append({'col1':'Low Proteins with just one PSM', 'col2': numOnePSMlow, 'col3':"{:.2f}".format((numOnePSMlow/numlowprots)*100), 'col4':'% of low proteins'})
-    rows.append({'col1':'None Proteins with just one PSM', 'col2': numOnePSMnone, 'col3':"{:.2f}".format((numOnePSMnone/numnoneprots)*100), 'col4':'% of none proteins'})
+    if numlowprots == 0:
+        rows.append({'col1':'Low Proteins with just one PSM', 'col2': numOnePSMlow, 'col3': '---', 'col4':'% of low proteins'})
+    else:
+        rows.append({'col1':'Low Proteins with just one PSM', 'col2': numOnePSMlow, 'col3':"{:.2f}".format((numOnePSMlow/numlowprots)*100), 'col4':'% of low proteins'})
+    rows.append({'col1':'Zero Proteins with just one PSM', 'col2': numOnePSMzero, 'col3':"{:.2f}".format((numOnePSMzero/numzeroprots)*100), 'col4':'% of zero proteins'})
 #    rows.append({'col1':'NSB Proteins with just one PSM', 'col2': '', 'col3':'', 'col4':''})
 #    rows.append({'col1':'Proteins with just one SCM PSM', 'col2': numOnePSM, 'col3':'', 'col4':''})
     rows.append({'col1':'High Proteins with nG', 'col2': ngHigh, 'col3':'', 'col4':''})
@@ -268,15 +281,15 @@ def cScIFTING(df):
     highprots = []
     medprots = []
     lowprots = []
-    noneprots = []
+    zeroprots = []
     highpeps = []
     medpeps = []
     lowpeps = []
-    nonepeps = []
+    zeropeps = []
     highpsms = []
     medpsms = []
     lowpsms = []
-    nonepsms = []
+    zeropsms = []
 
     totSCMnG = 0
     totSCMmultiN = 0
@@ -338,20 +351,20 @@ def cScIFTING(df):
 
         if proteins[accession]['countSCM'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 2 :
             prot['Level of Evidence'] = '2'
-            prot['Assignment'] = 'None'
-            noneprots.append(prot)
+            prot['Assignment'] = 'Zero'
+            zeroprots.append(prot)
         elif proteins[accession]['countSCM'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 3 :
             prot['Level of Evidence'] = '3'
-            prot['Assignment'] = 'None'
-            noneprots.append(prot)
+            prot['Assignment'] = 'Zero'
+            zeroprots.append(prot)
         elif proteins[accession]['countSCM'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 5 :
             prot['Level of Evidence'] = '2+3'
-            prot['Assignment'] = 'None'
-            noneprots.append(prot)
+            prot['Assignment'] = 'Zero'
+            zeroprots.append(prot)
         elif proteins[accession]['countSCM'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 0 :
             prot['Level of Evidence'] = '0'
-            prot['Assignment'] = 'None'
-            noneprots.append(prot)
+            prot['Assignment'] = 'Zero'
+            zeroprots.append(prot)
         elif proteins[accession]['countSCM'] > 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 0 :
             prot['Level of Evidence'] = '1'
             prot['Assignment'] = 'Low'
@@ -403,30 +416,27 @@ def cScIFTING(df):
                 medpeps.append(freshPep)
             elif prot['Assignment'] == 'Low':
                 lowpeps.append(freshPep)
-            elif prot['Assignment'] == 'None':
-                nonepeps.append(freshPep)
+            elif prot['Assignment'] == 'Zero':
+                zeropeps.append(freshPep)
             else:
                 print("Warning. No Assignment Made!")
 
             # if proteins[accession]['countSCM'] and filterable(filterInfo, proteins[accession]['MPAnoIso']):
-            #     scmpeps.append(freshPep)
-            # else:
+            #       cmpeps.append(freshPep)
+            # else
             #     nsbpeps.append(freshPep)
-        # if proteins[accession]['countSCM'] and filterable(filterInfo, proteins[accession]['MPAnoIso']):
-        #     scmprots.append(prot)
-        # else:
-        #     nsbprots.append(prot)
 
 
         for psm in proteins[accession]['PSMs']:
+            freshPSM = psm.copy()
             if prot['Assignment'] == 'High':
-                highpsms.append(psm)
+                highpsms.append(freshPSM)
             elif prot['Assignment'] == 'Medium':
-                medpsms.append(psm)
+                medpsms.append(freshPSM)
             elif prot['Assignment'] == 'Low':
-                lowpsms.append(psm)
-            elif prot['Assignment'] == 'None':
-                nonepsms.append(psm)
+                lowpsms.append(freshPSM)
+            elif prot['Assignment'] == 'Zero':
+                zeropsms.append(freshPSM)
             else:
                 print("Warning. No Assignment Made!")
 
@@ -445,19 +455,20 @@ def cScIFTING(df):
     dfhighprot = pd.DataFrame(highprots)
     dfmedprot = pd.DataFrame(medprots)
     dflowprot = pd.DataFrame(lowprots)
-    dfnoneprot = pd.DataFrame(noneprots)
+    dfzeroprot = pd.DataFrame(zeroprots)
     dfhighpep = pd.DataFrame(highpeps)
     dfmedpep = pd.DataFrame(medpeps)
     dflowpep = pd.DataFrame(lowpeps)
-    dfnonepep = pd.DataFrame(nonepeps)
+    dfzeropep = pd.DataFrame(zeropeps)
     dfhighpsm = pd.DataFrame(highpsms)
     dfmedpsm = pd.DataFrame(medpsms)
     dflowpsm = pd.DataFrame(lowpsms)
-    dfnonepsm = pd.DataFrame(nonepsms)
+    dfzeropsm = pd.DataFrame(zeropsms)
 #    dfmiape = pd.DataFrame(miape)
     dfmotif = makeMotifRpt(totMotif)
 #    dfspecificity = makeSpecRpt(highprots, medprots, lowprots, noneprots, totOneSCMPSM, totSCMnG )
-    dfspecificity = makeSpecRpt( highprots, medprots, lowprots, noneprots )
+    print(len(highprots), len(medprots), len(lowprots), len(zeroprots), len(highpsms), len(medpsms), len(lowpsms), len(zeropsms) )
+    dfspecificity = makeSpecRpt( highprots, medprots, lowprots, zeroprots, len(highpsms), len(medpsms), len(lowpsms), len(zeropsms) )
     r = []
 #    if reagent['P21163'] > 0:
     r.append( {'Total PSMs': reagent['PNGaseF'],  'Reagent': 'PNGase F'})
@@ -467,11 +478,11 @@ def cScIFTING(df):
     r.append( {'Total PSMs': reagent['Trypsin'],  'Reagent': 'Trypsin'})
     dfreagent = pd.DataFrame(r)
 
-    return( dfhighprot, dfmedprot, dflowprot, dfnoneprot, dfhighpep, dfmedpep, dflowpep, dfnonepep, dfhighpsm, dfmedpsm, dflowpsm, dfnonepsm, dfreagent, dfmotif, dfspecificity )
+    return( dfhighprot, dfmedprot, dflowprot, dfzeroprot, dfhighpep, dfmedpep, dflowpep, dfzeropep, dfhighpsm, dfmedpsm, dflowpsm, dfzeropsm, dfreagent, dfmotif, dfspecificity )
 
 #xl = pd.read_excel('/home/jack/work/Projects/src/VeneerNG/ref/test.xlsx', engine='openpyxl')
 #xl = pd.read_excel('/home/jack/work/visun/Done/vSMC (5)/KB32.xlsx', engine='openpyxl')
 #xl = pd.read_excel('/home/jack/work/Projects/veneer/ref/0945_Simone_20200815_100_120_KB32.xlsx', engine='openpyxl')
-#xl = pd.read_excel('/home/jack/work/visun/Done/pT cells (3)/LBL2699.xlsx', engine='openpyxl')
+#xl = pd.read_excel('/home/jack/work/visun/Done/Dermal Fibroblast (23)/ARB2145.xlsx', engine='openpyxl')
 #output = cScIFTING(xl)
 #print("hi")

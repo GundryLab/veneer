@@ -39,6 +39,9 @@ source_python('./ref/cScIFTING.py')
 # put this here so that it only runs once per instance on shinyapps.io
 #annotation <- read.delim("./ref/CIRFESSannotations.tsv", header = TRUE)
 annotation <- "a"
+# There is a chance that some high/med/low/zero groups will have no proteins in them.  Low is most likely.
+# I set a variable here to set later so that it can be seen in each function.
+lowOK = FALSE
 
 #set up data structures for database
 protein_fields <- c('MPA','MPAnoIso', 'numPep', 'numPSM', 'psmExclusive', 'pctExclusive', 'PSMwSCM', 'pctPSMwSCM', 'SCMonePSM')
@@ -113,10 +116,16 @@ shinyServer(function(input, output, session) {
 
         # add a column displaying the % of SCMs that are nG 
         # simply divide nG column by SCM column
+        
+        if( length(p[[3]]) >0 ) {
+          lowOK = TRUE
+        }
 
         p[[1]]['pctNG'] <- round(p[[1]]['countNG']/p[[1]]['PSMwSCM'], 2)
         p[[2]]['pctNG'] <- round(p[[2]]['countNG']/p[[2]]['PSMwSCM'], 2)
-        p[[3]]['pctNG'] <- round(p[[3]]['countNG']/p[[3]]['PSMwSCM'], 2)
+        if( lowOK ) {
+          p[[3]]['pctNG'] <- round(p[[3]]['countNG']/p[[3]]['PSMwSCM'], 2)
+        } 
       
         
         if(typeof(annotation) == "character"){
@@ -126,7 +135,9 @@ shinyServer(function(input, output, session) {
         # add the annotation to the proteins (pep and psm, would be straight-forward)
         p[[1]]<-join(p[[1]], annotation, by=c("MPAnoIso"), type="left", match="first")
         p[[2]]<-join(p[[2]], annotation, by=c("MPAnoIso"), type="left", match="first")
-        p[[3]]<-join(p[[3]], annotation, by=c("MPAnoIso"), type="left", match="first")
+        if( lowOK ) {
+          p[[3]]<-join(p[[3]], annotation, by=c("MPAnoIso"), type="left", match="first")
+        }
         p[[4]]<-join(p[[4]], annotation, by=c("MPAnoIso"), type="left", match="first")
         
         #Add specificity stuff
@@ -150,13 +161,21 @@ shinyServer(function(input, output, session) {
         p[[12]] <- p[[12]][, !names(p[[12]]) %in% c("ID")]
         
         # perform the GO term analysis
-        go <- c(p[[1]]$Gene.Ontology..GO...Uniprot., p[[2]]$Gene.Ontology..GO...Uniprot., p[[3]]$Gene.Ontology..GO...Uniprot.)
+        if( lowOK ){
+          go <- c(p[[1]]$Gene.Ontology..GO...Uniprot., p[[2]]$Gene.Ontology..GO...Uniprot., p[[3]]$Gene.Ontology..GO...Uniprot.)
+        } else {
+          go <- c(p[[1]]$Gene.Ontology..GO...Uniprot., p[[2]]$Gene.Ontology..GO...Uniprot.)
+        }
         tdf <- as.data.frame(table(unlist(sapply(as.character(go),strsplit,split=';'),use.names=FALSE)))
         colnames(tdf)<-c('Gene Ontology Term', 'Count')
         p[[16]]<-tdf[order(-tdf$Count),]
 
         # perform the keyword analysis
-        kw <- c(p[[1]]$Gene.Ontology..GO...Uniprot., p[[2]]$Gene.Ontology..GO...Uniprot., p[[3]]$Gene.Ontology..GO...Uniprot.)
+        if( lowOK ) {
+          kw <- c(p[[1]]$Keywords..Uniprot., p[[2]]$Keywords..Uniprot., p[[3]]$Keywords..Uniprot.)
+        } else {
+          kw <- c(p[[1]]$Keywords..Uniprot., p[[2]]$Keywords..Uniprot.)
+        }
         tdf <- as.data.frame(table(unlist(sapply(as.character(kw),strsplit,split=';'),use.names=FALSE)))
         colnames(tdf)<-c('Keywords (Uniprot)', 'Count')
         p[[17]]<-tdf[order(-tdf$Count),]
@@ -175,7 +194,9 @@ shinyServer(function(input, output, session) {
         
         tdf <-p[[9]][c('MPA', 'Annotated Sequence')]
         tdf<- rbind(tdf, p[[10]][c('MPA', 'Annotated Sequence')])
-        tdf<- rbind(tdf, p[[11]][c('MPA', 'Annotated Sequence')])
+        if( lowOK ) {
+          tdf<- rbind(tdf, p[[11]][c('MPA', 'Annotated Sequence')])
+        }
         colnames(tdf)<-c('Accession', 'Annotated Sequence')
         Replaces <- data.frame(from = c("n", "c", "m"), to = c("N[+1]", "C[+57]", "M[+16]"))
         tdf<-data.frame(tdf, 'PeptideSequence'=sapply(strsplit(as.character(tdf$'Annotated Sequence'),'.',fixed=TRUE), "[", 2))
@@ -210,7 +231,11 @@ shinyServer(function(input, output, session) {
       exp <- names(data_input())[i] 
       highprot <- length(p[[1]][,1])
       medprot <- length(p[[2]][,1])
-      lowprot <- length(p[[3]][,1])
+      if( length(p[[3]]) > 0){
+        lowprot <- length(p[[3]][,1])
+      } else {
+        lowprot<-0
+      }
       noneprot <- length(p[[4]][,1])
       totprot <- highprot + medprot + lowprot + noneprot
       pcthighprot <- highprot/totprot

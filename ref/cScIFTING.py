@@ -225,12 +225,14 @@ def cScIFTING(df):
                 motifs = findSCM(psm['Annotated Sequence'])
                 if motifs:
                     psm['hasSCM'] = 1
+                    psm['motifs'] = ', '.join(motifs)
                     for motif in motifs:
                         motif.upper()
                         proteins[accession][motif[-1].upper()] += 1
                         totMotif[motif[-1].upper()] += 1
                 else:
                     psm['hasSCM'] = 0
+                    psm['motifs'] = ''
                 proteins[accession]['countSCM'] += psm['hasSCM']
                 nG = findDeamination(psm['Annotated Sequence'])
                 if nG:

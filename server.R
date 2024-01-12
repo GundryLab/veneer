@@ -33,7 +33,6 @@ source('functions.R')
 virtualenv_create("r-reticulate")
 virtualenv_install("r-reticulate", "pandas")
 use_virtualenv("r-reticulate", required = T)
-
 # this is how we access the python script
 source_python('./ref/cScIFTING.py')
 
@@ -109,12 +108,16 @@ shinyServer(function(input, output, session) {
         # spreadsheet to save memory.  I will need to put the information back into the 
         # PSM tabs in the output spreadsheet.  The ID column is used for this purpose
         p <- cScIFTING( df[c('ID', 'Master Protein Accessions', 'Annotated Sequence')] )
-        nG <-sum(p[[1]]['countNG'])
-        tot <-sum(p[[1]]['PSMwSCM'])
+#        nG <-sum(p[[1]]['countNG'])
+#        tot <-sum(p[[1]]['PSMwSCM'])
 
         # add a column displaying the % of SCMs that are nG 
         # simply divide nG column by SCM column
+
         p[[1]]['pctNG'] <- round(p[[1]]['countNG']/p[[1]]['PSMwSCM'], 2)
+        p[[2]]['pctNG'] <- round(p[[2]]['countNG']/p[[2]]['PSMwSCM'], 2)
+        p[[3]]['pctNG'] <- round(p[[3]]['countNG']/p[[3]]['PSMwSCM'], 2)
+      
         
         if(typeof(annotation) == "character"){
 #          print("at first annotation reading")
@@ -122,31 +125,42 @@ shinyServer(function(input, output, session) {
         }
         # add the annotation to the proteins (pep and psm, would be straight-forward)
         p[[1]]<-join(p[[1]], annotation, by=c("MPAnoIso"), type="left", match="first")
-#        print(colnames(p[[1]]))
         p[[2]]<-join(p[[2]], annotation, by=c("MPAnoIso"), type="left", match="first")
-
+        p[[3]]<-join(p[[3]], annotation, by=c("MPAnoIso"), type="left", match="first")
+        p[[4]]<-join(p[[4]], annotation, by=c("MPAnoIso"), type="left", match="first")
+        
         #Add specificity stuff
-        scmOnePSM <- sum(p[[1]]['SCMonePSM'])
-        nsbOnePSM <- sum(p[[2]]['SCMonePSM'])
-        p[[10]][7,2] <- scmOnePSM
-        p[[10]][8,2] <- nsbOnePSM
+#        highOnePSM <- sum(p[[1]]['SCMonePSM'])
+#        medOnePSM <- sum(p[[2]]['SCMonePSM'])
+#        lowOnePSM <- sum(p[[3]]['SCMonePSM'])
+#        noneOnePSM <- sum(p[[4]]['SCMonePSM'])
+#        p[[15]][7,2] <- highOnePSM
+#        p[[15]][8,2] <- medOnePSM
+#        p[[15]][7,2] <- lowOnePSM
+#        p[[15]][8,2] <- noneOnePSM
         
         # put the PSM information from the PD file back into the PSM spreadsheet tabs
-        p[[5]] <- join(p[[5]], df, type='left', match='first')
-        p[[5]]<-p[[5]][, !names(p[[5]]) %in% c("ID")]
-        p[[6]] <- join(p[[6]], df, type='left', match='first')
-        p[[6]]<-p[[6]][, !names(p[[6]]) %in% c("ID")]
+        p[[9]] <- join(p[[9]], df, type='left', match='first')
+        p[[9]] <- p[[9]][, !names(p[[9]]) %in% c("ID")]
+        p[[10]] <- join(p[[10]], df, type='left', match='first')
+        p[[10]] <- p[[10]][, !names(p[[10]]) %in% c("ID")]
+        p[[11]] <- join(p[[11]], df, type='left', match='first')
+        p[[11]] <- p[[11]][, !names(p[[11]]) %in% c("ID")]
+        p[[12]] <- join(p[[12]], df, type='left', match='first')
+        p[[12]] <- p[[12]][, !names(p[[12]]) %in% c("ID")]
         
         # perform the GO term analysis
-        tdf <- as.data.frame(table(unlist(sapply(as.character(p[[1]]$Gene.Ontology..GO...Uniprot.),strsplit,split=';'),use.names=FALSE)))
+        go <- c(p[[1]]$Gene.Ontology..GO...Uniprot., p[[2]]$Gene.Ontology..GO...Uniprot., p[[3]]$Gene.Ontology..GO...Uniprot.)
+        tdf <- as.data.frame(table(unlist(sapply(as.character(go),strsplit,split=';'),use.names=FALSE)))
         colnames(tdf)<-c('Gene Ontology Term', 'Count')
-        p[[11]]<-tdf[order(-tdf$Count),]
-        
+        p[[16]]<-tdf[order(-tdf$Count),]
+
         # perform the keyword analysis
-        tdf <- as.data.frame(table(unlist(sapply(as.character(p[[1]]$Keywords..Uniprot.),strsplit,split=';'),use.names=FALSE)))
+        kw <- c(p[[1]]$Gene.Ontology..GO...Uniprot., p[[2]]$Gene.Ontology..GO...Uniprot., p[[3]]$Gene.Ontology..GO...Uniprot.)
+        tdf <- as.data.frame(table(unlist(sapply(as.character(kw),strsplit,split=';'),use.names=FALSE)))
         colnames(tdf)<-c('Keywords (Uniprot)', 'Count')
-        p[[12]]<-tdf[order(-tdf$Count),]
-        
+        p[[17]]<-tdf[order(-tdf$Count),]
+
         ###################
         # Make the Protter output.
         # Start with Accession and Annotated Sequence
@@ -159,14 +173,16 @@ shinyServer(function(input, output, session) {
         # and what to replace it with.  that dataframe 'Replaces' is for.
         ###################
         
-        tdf<-data.frame(p[[5]]$MPA, p[[5]]$'Annotated Sequence')
+        tdf <-p[[9]][c('MPA', 'Annotated Sequence')]
+        tdf<- rbind(tdf, p[[10]][c('MPA', 'Annotated Sequence')])
+        tdf<- rbind(tdf, p[[11]][c('MPA', 'Annotated Sequence')])
         colnames(tdf)<-c('Accession', 'Annotated Sequence')
         Replaces <- data.frame(from = c("n", "c", "m"), to = c("N[+1]", "C[+57]", "M[+16]"))
         tdf<-data.frame(tdf, 'PeptideSequence'=sapply(strsplit(as.character(tdf$'Annotated Sequence'),'.',fixed=TRUE), "[", 2))
         tdf$PeptideModifiedSequence<-tdf$PeptideSequence
         tdf <- FindReplace(data = tdf, Var = "PeptideModifiedSequence", replaceData = Replaces,from = "from", to = "to", exact = FALSE)
-        p[[13]]<-data.frame(tdf$Accession, tdf$PeptideSequence, tdf$PeptideModifiedSequence)
-        colnames(p[[13]])<-c('ProteinName', 'PeptideSequence', 'PeptideModifiedSequence')
+        p[[18]]<-data.frame(tdf$Accession, tdf$PeptideSequence, tdf$PeptideModifiedSequence)
+        colnames(p[[18]])<-c('ProteinName', 'PeptideSequence', 'PeptideModifiedSequence')
         
         # input for CIRFESS
 #        p[[14]]<-data.frame(p[[1]]$MPA)
@@ -175,7 +191,7 @@ shinyServer(function(input, output, session) {
 #        p[[15]]<-p[[1]][which(p[[1]]$"Signal.Peptide..PredSi."=="Yes"),]
         
         #put nG back in there
-        p[[14]] <- round((nG*100)/tot, 2)
+#        p[[20]] <- round((nG*100)/tot, 2)
       })
       d[[fn]] <- p
     }
@@ -192,26 +208,35 @@ shinyServer(function(input, output, session) {
     for(i in 1:length( data_input() )) {
       p<-data_input()[[i]]
       exp <- names(data_input())[i] 
-      scm <- length(p[[1]][,1])
-      nsb <- length(p[[2]][,1])
-      pctProt <- p[[10]][2,3]
-      pctPSM <- p[[10]][5,3]
-      pngasef <- p[[8]][1,1]
-      strep <- p[[8]][2,1]
-      tryp <- p[[8]][3,1]
-      nG <- p[[14]]
-      nxt <- p[[9]][3,1]
-      nxs <- p[[9]][5,1]
-      nxc <- p[[9]][7,1]
-      nxv <- p[[9]][9,1]
-      scmOne <- sum(p[[1]]['SCMonePSM'])
-      nsbOne <- sum(p[[2]]['SCMonePSM'])
-      s <- c( s, c(exp, scm, nsb, pctProt, pctPSM, pngasef, strep, tryp, nxt, nxs, nxc, nxv, scmOne, nsbOne, nG) )
+      highprot <- length(p[[1]][,1])
+      medprot <- length(p[[2]][,1])
+      lowprot <- length(p[[3]][,1])
+      noneprot <- length(p[[4]][,1])
+      totprot <- highprot + medprot + lowprot + noneprot
+      pcthighprot <- highprot/totprot
+      pctmedprot <- medprot/totprot
+      pctlowprot <- lowprot/totprot
+      pctnoneprot <- noneprot/totprot
+#      pngasef <- p[[13]][1,1]
+#      strep <- p[[13]][2,1]
+#      tryp <- p[[13]][3,1]
+#      highng <- p[[15]][5,2] 
+#      medng <- p[[15]][6,2]
+#      lowng <- p[[15]][7,2]
+#      nxt <- p[[14]][3,1]
+#      nxs <- p[[14]][5,1]
+#      nxc <- p[[14]][7,1]
+#      nxv <- p[[14]][9,1]
+#      scmOne <- sum(p[[1]]['SCMonePSM'])
+#      nsbOne <- sum(p[[2]]['SCMonePSM'])
+#      s <- c( s, c(exp, highprot, pcthighprot, highng, medprot, pctmedprot, medng, lowprot, pctlowprot, lowng, noneprot, pctnoneprot, pngasef, strep, tryp, nxt, nxs, nxc, nxv) )
+      s <- c( s, c(exp, highprot, round(pcthighprot*100,1), medprot, round(pctmedprot*100,1), lowprot, round(pctlowprot*100,1), noneprot, round(pctnoneprot*100,1) ))
       
 #      s <- c( s, c(exp, scm, nsb, pctProt, pctPSM, pngasef, strep, tryp, nG) )
     }
-    df <- data.frame(matrix(s,ncol=15, byrow=TRUE))
-    colnames(df) <- c('Experiment', 'SCM Proteins', 'NSB Proteins', '%Protein Specificity', '%PSM Specificity', 'PNGaseF PSMs', 'Streptavidin PSMs', 'Trypsin PSMs', '% NXT', '% NXS', '% NXC', '% NXV', 'sequon One PSM', 'NSB One PSM', 'n-G-S/T/C/V' )
+    df <- data.frame(matrix(s,ncol=9, byrow=TRUE))
+#    colnames(df) <- c('Experiment', '# High Proteins', '% High Proteins', '# High PSMs nG', '# Medium Proteins', '% Medium Proteins', '# Medium PSMs nG', '# Low Proteins', '% Low Proteins', '# Low PSMs nG', '# None Proteins', '% None Proteins', 'PNGaseF PSMs', 'Streptavidin PSMs', 'Trypsin PSMs', '% NXT', '% NXS', '% NXC', '% NXV' )
+    colnames(df) <- c('Experiment', '# High Proteins', '% High Proteins', '# Medium Proteins', '% Medium Proteins', '# Low Proteins', '% Low Proteins', '# None Proteins', '% None Proteins' )
     df
   })
   
@@ -244,13 +269,13 @@ shinyServer(function(input, output, session) {
           fn <- names(d)[i]
           cscfile = paste0(fn, '_Veneer.xlsx')
           protterfile = paste0(fn, '_protter.tsv')
-          protter <- rbind(protter, p[[13]])
+          protter <- rbind(protter, p[[18]])
 #          l = list("SCM Proteins"=p[[1]], "SCM - Filtered"=p[[15]], "NSB Proteins"=p[[2]], "SCM Peptides"=p[[3]], "NSB Peptides"=p[[4]], "SCM PSMs"=p[[5]], "NSB PSMs"=p[[6]], "MIAPE"=p[[7]], "Reagent Analysis"=p[[8]], "Motif Analysis"=p[[9]], "Specificity"=p[[10]], "GO Terms"=p[[11]], "Keywords"=p[[12]])
 #          l = list("SCM Proteins"=p[[1]], "SCM - Filtered"=p[[15]], "NSB Proteins"=p[[2]], "SCM Peptides"=p[[3]], "NSB Peptides"=p[[4]], "SCM PSMs"=p[[5]], "NSB PSMs"=p[[6]], "Reagent Analysis"=p[[8]], "Motif Analysis"=p[[9]], "Specificity"=p[[10]], "GO Terms (Uniprot)"=p[[11]], "Keywords (Uniprot)"=p[[12]])
-          l = list("SCM Proteins"=p[[1]], "NSB Proteins"=p[[2]], "SCM Peptides"=p[[3]], "NSB Peptides"=p[[4]], "SCM PSMs"=p[[5]], "NSB PSMs"=p[[6]], "Reagent Analysis"=p[[8]], "Motif Analysis"=p[[9]], "Specificity"=p[[10]], "GO Terms (Uniprot)"=p[[11]], "Keywords (Uniprot)"=p[[12]])
+          l = list("High Proteins"=p[[1]], "Medium Proteins"=p[[2]], "Low Proteins"=p[[3]], "None Proteins"=p[[4]], "High Peptides"=p[[5]], "Medium Peptides"=p[[6]], "Low Peptides"=p[[7]], "None Peptides"=p[[8]],  "High PSMs"=p[[9]], "Medium PSMs"=p[[10]], "Low PSMs"=p[[11]], "None PSMs"=p[[12]],  "Reagent Analysis"=p[[13]], "Motif Analysis"=p[[14]], "Specificity"=p[[15]], "GO Terms (Uniprot)"=p[[16]], "Keywords (Uniprot)"=p[[17]])
 #          write.xlsx(l, cscfile, colNames=c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE))
-          write.xlsx(l, cscfile, colNames=c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE))
-          protterout <- protterfy( p[[13]] )
+          write.xlsx(l, cscfile, colNames=c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE))
+          protterout <- protterfy( p[[18]] )
           write.table(protterout, protterfile, row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
           incProgress (1) 
           

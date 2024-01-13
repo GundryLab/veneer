@@ -41,7 +41,6 @@ source_python('./ref/cScIFTING.py')
 annotation <- "a"
 # There is a chance that some high/med/low/zero groups will have no proteins in them.  Low is most likely.
 # I set a variable here to set later so that it can be seen in each function.
-lowOK = FALSE
 
 #set up data structures for database
 protein_fields <- c('MPA','MPAnoIso', 'numPep', 'numPSM', 'psmExclusive', 'pctExclusive', 'PSMwSCM', 'pctPSMwSCM', 'SCMonePSM')
@@ -119,13 +118,15 @@ shinyServer(function(input, output, session) {
         
         if( length(p[[3]]) >0 ) {
           lowOK = TRUE
+        } else {
+          lowOK = FALSE
         }
 
-        p[[1]]['pctNG'] <- round(p[[1]]['countNG']/p[[1]]['PSMwSCM'], 2)
-        p[[2]]['pctNG'] <- round(p[[2]]['countNG']/p[[2]]['PSMwSCM'], 2)
-        if( lowOK ) {
-          p[[3]]['pctNG'] <- round(p[[3]]['countNG']/p[[3]]['PSMwSCM'], 2)
-        } 
+        # p[[1]]['pctNG'] <- round(p[[1]]['countNG']/p[[1]]['PSMwSCM'], 2)
+        # p[[2]]['pctNG'] <- round(p[[2]]['countNG']/p[[2]]['PSMwSCM'], 2)
+        # if( lowOK ) {
+        #   p[[3]]['pctNG'] <- round(p[[3]]['countNG']/p[[3]]['PSMwSCM'], 2)
+        # } 
       
         
         if(typeof(annotation) == "character"){
@@ -297,7 +298,7 @@ shinyServer(function(input, output, session) {
           protter <- rbind(protter, p[[18]])
 #          l = list("SCM Proteins"=p[[1]], "SCM - Filtered"=p[[15]], "NSB Proteins"=p[[2]], "SCM Peptides"=p[[3]], "NSB Peptides"=p[[4]], "SCM PSMs"=p[[5]], "NSB PSMs"=p[[6]], "MIAPE"=p[[7]], "Reagent Analysis"=p[[8]], "Motif Analysis"=p[[9]], "Specificity"=p[[10]], "GO Terms"=p[[11]], "Keywords"=p[[12]])
 #          l = list("SCM Proteins"=p[[1]], "SCM - Filtered"=p[[15]], "NSB Proteins"=p[[2]], "SCM Peptides"=p[[3]], "NSB Peptides"=p[[4]], "SCM PSMs"=p[[5]], "NSB PSMs"=p[[6]], "Reagent Analysis"=p[[8]], "Motif Analysis"=p[[9]], "Specificity"=p[[10]], "GO Terms (Uniprot)"=p[[11]], "Keywords (Uniprot)"=p[[12]])
-          l = list("High Proteins"=p[[1]], "Medium Proteins"=p[[2]], "Low Proteins"=p[[3]], "None Proteins"=p[[4]], "High Peptides"=p[[5]], "Medium Peptides"=p[[6]], "Low Peptides"=p[[7]], "None Peptides"=p[[8]],  "High PSMs"=p[[9]], "Medium PSMs"=p[[10]], "Low PSMs"=p[[11]], "None PSMs"=p[[12]],  "Reagent Analysis"=p[[13]], "Motif Analysis"=p[[14]], "Specificity"=p[[15]], "GO Terms (Uniprot)"=p[[16]], "Keywords (Uniprot)"=p[[17]])
+          l = list("High Proteins"=p[[1]], "Medium Proteins"=p[[2]], "Low Proteins"=p[[3]], "Zero Proteins"=p[[4]], "High Peptides"=p[[5]], "Medium Peptides"=p[[6]], "Low Peptides"=p[[7]], "Zero Peptides"=p[[8]],  "High PSMs"=p[[9]], "Medium PSMs"=p[[10]], "Low PSMs"=p[[11]], "Zero PSMs"=p[[12]],  "Reagent Analysis"=p[[13]], "Motif Analysis"=p[[14]], "Specificity"=p[[15]], "GO Terms (Uniprot)"=p[[16]], "Keywords (Uniprot)"=p[[17]])
 #          write.xlsx(l, cscfile, colNames=c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE))
           write.xlsx(l, cscfile, colNames=c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE))
           protterout <- protterfy( p[[18]] )

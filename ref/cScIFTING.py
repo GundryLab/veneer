@@ -85,7 +85,7 @@ def makeSpecRpt( highprots, medprots, lowprots, zeroprots, numhighpsms, nummedps
     numOnePSMzero = countOnePSM(zeroprots)
     ngHigh = getNG(highprots)
     ngMed = getNG(medprots)
-    ngLow = getNG(highprots)
+    ngLow = getNG(lowprots)
 
 #    numPSMs = numhighpsms + nummedpsms + numlowpsms + numnonepsms
 
@@ -322,9 +322,14 @@ def cScIFTING(df):
         # else:
         #     prot['hasNG'] = 0
         prot['countNG'] = proteins[accession]['countNG']
+        if prot['PSMwSCM'] > 0 :
+            prot['pctNG'] = prot['countNG']/prot['PSMwSCM']
+        else:
+            prot['pctNG'] = 0
         # this is to count the number of nG for all SMC proteins that we report in the
         # output spreadsheet, on the veneer results screen, and in CSC_Log
         totSCMnG += prot['countNG']
+
         prot['countMultiN'] = proteins[accession]['countMultiN']
         # this is to count the number of PSMs with multiple Ns. Multiple Ns can screw up the search for
         # sequons because the wrong one might be listed as deaminated by the mass spec instrument
@@ -469,7 +474,6 @@ def cScIFTING(df):
 #    dfmiape = pd.DataFrame(miape)
     dfmotif = makeMotifRpt(totMotif)
 #    dfspecificity = makeSpecRpt(highprots, medprots, lowprots, noneprots, totOneSCMPSM, totSCMnG )
-    print(len(highprots), len(medprots), len(lowprots), len(zeroprots), len(highpsms), len(medpsms), len(lowpsms), len(zeropsms) )
     dfspecificity = makeSpecRpt( highprots, medprots, lowprots, zeroprots, len(highpsms), len(medpsms), len(lowpsms), len(zeropsms) )
     r = []
 #    if reagent['P21163'] > 0:

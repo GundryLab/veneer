@@ -6,7 +6,7 @@ import re
 def printLog(log):
     return(log)
 
-def findSCM(seq):
+def findSequon(seq):
     seq = re.sub('\[|\]', '', seq)
     seq = re.split('\.', seq )[1] +  re.split('\.', seq )[2]
     l = re.findall('n[A|C|D|E|F|G|H|I|K|L|M|N|O|Q|R|S|T|U|V|W|Y|a|c|d|e|f|g|h|i|k|l|m|n|o|q|r|s|t|u|v|w|y][C|S|T|V|c|s|t|v]', seq)
@@ -170,7 +170,7 @@ def cScIFTING(df):
 
     totPSMs = 0
     totMotif = {'S':0, 'C':0, 'T':0, 'V':0}
-    totOneSCMPSM = 0
+    totOneSequonPSM = 0
 
     for psm in df.to_dict('records'):
 #        print(psm.keys())
@@ -203,8 +203,8 @@ def cScIFTING(df):
                 if accession not in proteins:
                     proteins[accession] = {}
                     proteins[accession]['countPSMs'] = 0
-                    proteins[accession]['countSCM'] = 0
-                    proteins[accession]['hasSCM'] = 0
+                    proteins[accession]['countSequon'] = 0
+                    proteins[accession]['hasSequon'] = 0
                     proteins[accession]['countNG'] = 0
                     proteins[accession]['countMultiN'] = 0
                     proteins[accession]['exclusive'] = 0
@@ -219,18 +219,18 @@ def cScIFTING(df):
                     proteins[accession]['Peptides'] = {}
                 pepSeq = convertSeq(psm['Annotated Sequence'])
                 proteins[accession]['countPSMs'] += 1
-                motifs = findSCM(psm['Annotated Sequence'])
+                motifs = findSequon(psm['Annotated Sequence'])
                 if motifs:
-                    psm['hasSCM'] = 1
+                    psm['hasSequon'] = 1
                     psm['motifs'] = ', '.join(motifs)
                     for motif in motifs:
                         motif.upper()
                         proteins[accession][motif[-1].upper()] += 1
                         totMotif[motif[-1].upper()] += 1
                 else:
-                    psm['hasSCM'] = 0
+                    psm['hasSequon'] = 0
                     psm['motifs'] = ''
-                proteins[accession]['countSCM'] += psm['hasSCM']
+                proteins[accession]['countSequon'] += psm['hasSequon']
                 nG = findDeamination(psm['Annotated Sequence'])
                 if nG:
                     psm['hasNG'] = 1
@@ -267,13 +267,13 @@ def cScIFTING(df):
                     proteins[accession]['Peptides'][pepSeq] = {}
                     proteins[accession]['Peptides'][pepSeq]['origMPA'] = MPA
                     proteins[accession]['Peptides'][pepSeq]['countPSMs'] = 0
-                    proteins[accession]['Peptides'][pepSeq]['countSCM'] = 0
+                    proteins[accession]['Peptides'][pepSeq]['countSequon'] = 0
                     proteins[accession]['Peptides'][pepSeq]['countNG'] = 0
                     proteins[accession]['Peptides'][pepSeq]['countMultiN'] = 0
 #                    proteins[accession]['Peptides'][pepSeq]['AnnSeq'] = psm['Annotated Sequence']
                     proteins[accession]['countPeps'] += 1
                 proteins[accession]['Peptides'][pepSeq]['countPSMs'] += 1
-                proteins[accession]['Peptides'][pepSeq]['countSCM'] += psm['hasSCM']
+                proteins[accession]['Peptides'][pepSeq]['countSequon'] += psm['hasSequon']
                 proteins[accession]['Peptides'][pepSeq]['countNG'] += psm['hasNG']
                 proteins[accession]['Peptides'][pepSeq]['countMultiN'] += psm['hasMultiN']
 
@@ -290,8 +290,8 @@ def cScIFTING(df):
     lowpsms = []
     zeropsms = []
 
-    totSCMnG = 0
-    totSCMmultiN = 0
+    totSequonnG = 0
+    totSequonmultiN = 0
 
     for accession in proteins:
         prot={}
@@ -306,27 +306,27 @@ def cScIFTING(df):
 #        prot['pctPSM'] = proteins[accession]['countPSMs'] / totPSMs #proteins[accession]['totPSM']
         prot['psmExclusive'] = proteins[accession]['exclusive']
         prot['pctExclusive'] = round( proteins[accession]['exclusive'] / proteins[accession]['countPSMs'], 2 )
-        prot['PSMwSCM'] = proteins[accession]['countSCM']
-        prot['pctPSMwSCM'] = round( proteins[accession]['countSCM'] / proteins[accession]['countPSMs'], 2 )
-        if proteins[accession]['countSCM'] == 1:
-            prot['SCMonePSM'] = 1
-            totOneSCMPSM += 1
+        prot['PSMwSequon'] = proteins[accession]['countSequon']
+        prot['pctPSMwSequon'] = round( proteins[accession]['countSequon'] / proteins[accession]['countPSMs'], 2 )
+        if proteins[accession]['countSequon'] == 1:
+            prot['SequononePSM'] = 1
+            totOneSequonPSM += 1
         else:
-            prot['SCMonePSM'] = 0
+            prot['SequononePSM'] = 0
         prot['countNG'] = proteins[accession]['countNG']
-        if prot['PSMwSCM'] > 0 :
-            prot['pctNG'] = prot['countNG']/prot['PSMwSCM']
+        if prot['PSMwSequon'] > 0 :
+            prot['pctNG'] = prot['countNG']/prot['PSMwSequon']
         else:
             prot['pctNG'] = 0
         # this is to count the number of nG for all SMC proteins that we report in the
         # output spreadsheet, on the veneer results screen, and in CSC_Log
-        totSCMnG += prot['countNG']
+        totSequonnG += prot['countNG']
 
         prot['countMultiN'] = proteins[accession]['countMultiN']
         # this is to count the number of PSMs with multiple Ns. Multiple Ns can screw up the search for
         # sequons because the wrong one might be listed as deaminated by the mass spec instrument
         # This is for all  proteins that we report in the  output spreadsheet, on the veneer results screen, and in CSC_Log
-        totSCMmultiN += prot['countMultiN']
+        totSequonmultiN += prot['countMultiN']
 
         numMotifs = proteins[accession]['T'] + proteins[accession]['S'] + proteins[accession]['C'] + proteins[accession]['V']
         if numMotifs == 0 :
@@ -348,35 +348,35 @@ def cScIFTING(df):
             prot['countNXV'] = proteins[accession]['V']
             prot['pctNXV'] = proteins[accession]['V'] / numMotifs
 
-        if proteins[accession]['countSCM'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 2 :
+        if proteins[accession]['countSequon'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 2 :
             prot['Level of Evidence'] = '2'
             prot['Assignment'] = 'Zero'
             zeroprots.append(prot)
-        elif proteins[accession]['countSCM'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 3 :
+        elif proteins[accession]['countSequon'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 3 :
             prot['Level of Evidence'] = '3'
             prot['Assignment'] = 'Zero'
             zeroprots.append(prot)
-        elif proteins[accession]['countSCM'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 5 :
+        elif proteins[accession]['countSequon'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 5 :
             prot['Level of Evidence'] = '2+3'
             prot['Assignment'] = 'Zero'
             zeroprots.append(prot)
-        elif proteins[accession]['countSCM'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 0 :
+        elif proteins[accession]['countSequon'] == 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 0 :
             prot['Level of Evidence'] = '0'
             prot['Assignment'] = 'Zero'
             zeroprots.append(prot)
-        elif proteins[accession]['countSCM'] > 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 0 :
+        elif proteins[accession]['countSequon'] > 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 0 :
             prot['Level of Evidence'] = '1'
             prot['Assignment'] = 'Low'
             lowprots.append(prot)
-        elif proteins[accession]['countSCM'] > 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 2 :
+        elif proteins[accession]['countSequon'] > 0 and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 2 :
             prot['Level of Evidence'] = '1+2'
             prot['Assignment'] = 'Medium'
             medprots.append(prot)
-        elif proteins[accession]['countSCM'] and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 3 :
+        elif proteins[accession]['countSequon'] and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 3 :
             prot['Level of Evidence'] = '1+3'
             prot['Assignment'] = 'High'
             highprots.append(prot)
-        elif proteins[accession]['countSCM'] and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 5 :
+        elif proteins[accession]['countSequon'] and filterable(filterInfo, proteins[accession]['MPAnoIso']) == 5 :
             prot['Level of Evidence'] = '1+2+3'
             prot['Assignment'] = 'High'
             highprots.append(prot)
@@ -396,16 +396,16 @@ def cScIFTING(df):
             pep['protPctPSMs'] = round( proteins[accession]['Peptides'][pepSeq]['countPSMs'] / proteins[accession]['countPSMs'], 2) #/ totPSMs #proteins[accession]['totPSM']
             pep['protExclusive'] = proteins[accession]['exclusive']
             pep['protPctExclusive'] = round( proteins[accession]['exclusive'] / proteins[accession]['countPSMs'], 2 )
-            pep['protPSMsSCM'] = proteins[accession]['countSCM']
-            pep['protPctPSMsSCM'] = round( proteins[accession]['countSCM'] / proteins[accession]['countPSMs'], 2)
-            pep['protSCMonePSM'] = 1 if proteins[accession]['countSCM'] == 1 else 0
+            pep['protPSMsSequon'] = proteins[accession]['countSequon']
+            pep['protPctPSMsSequon'] = round( proteins[accession]['countSequon'] / proteins[accession]['countPSMs'], 2)
+            pep['protSequononePSM'] = 1 if proteins[accession]['countSequon'] == 1 else 0
             pep['pepPSM'] = proteins[accession]['Peptides'][pepSeq]['countPSMs']
-            pep['pepPSMwSCM'] = proteins[accession]['Peptides'][pepSeq]['countSCM']
-            pep['pctPepPSMwSCM'] = round( pep['pepPSMwSCM'] / pep['pepPSM'], 2 )
-            if pep['pepPSMwSCM']:
-                pep['hasSCM'] = 1
+            pep['pepPSMwSequon'] = proteins[accession]['Peptides'][pepSeq]['countSequon']
+            pep['pctPepPSMwSequon'] = round( pep['pepPSMwSequon'] / pep['pepPSM'], 2 )
+            if pep['pepPSMwSequon']:
+                pep['hasSequon'] = 1
             else:
-                pep['hasSCM'] = 0
+                pep['hasSequon'] = 0
             pep['countNG'] = proteins[accession]['Peptides'][pepSeq]['countNG']
             pep['countMultiN'] = proteins[accession]['Peptides'][pepSeq]['countMultiN']
             freshPep = pep.copy()
@@ -463,7 +463,7 @@ def cScIFTING(df):
     return( dfhighprot, dfmedprot, dflowprot, dfzeroprot, dfhighpep, dfmedpep, dflowpep, dfzeropep, dfhighpsm, dfmedpsm, dflowpsm, dfzeropsm, dfreagent, dfmotif, dfspecificity )
 
 #xl = pd.read_excel('/home/jack/work/Projects/src/VeneerNG/ref/test.xlsx', engine='openpyxl')
-#xl = pd.read_excel('/home/jack/work/visun/Done/vSMC (5)/KB32.xlsx', engine='openpyxl')
+#xl = pd.read_excel('/home/jack/work/visun/Done/HG3 (3)/MW425.xlsx', engine='openpyxl')
 #xl = pd.read_excel('/home/jack/work/Projects/veneer/ref/0945_Simone_20200815_100_120_KB32.xlsx', engine='openpyxl')
 #xl = pd.read_excel('/home/jack/work/Projects/veneerDataV2/Public/Pub263.xlsx', engine='openpyxl')
 #output = cScIFTING(xl)

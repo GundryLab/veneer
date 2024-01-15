@@ -41,15 +41,8 @@ annotation <- "a"
 # There is a chance that some high/med/low/zero groups will have no proteins in them.  Low is most likely.
 # I set a variable here to set later so that it can be seen in each function.
 
-#set up data structures for database
-protein_fields <- c('MPA','MPAnoIso', 'numPep', 'numPSM', 'psmExclusive', 'pctExclusive', 'PSMwSCM', 'pctPSMwSCM', 'SCMonePSM')
-peptide_fields <- c('MPA','MPAnonSplit', 'MPAnoIso', 'pepSeq', 'numMPA', 'pepPSM', 'pepPSMwSCM', 'pctPepPSMwSCM', 'hasSCM')
-psm_fields <- c('MPA','MPAnonSplit', 'MPAnoIso', 'pepSeq', 'annSeq', 'numMPA', 'hasSCM')
-
-
 
 shinyServer(function(input, output, session) {
-  
 
   data_input <- eventReactive(input$userfile1, {
     

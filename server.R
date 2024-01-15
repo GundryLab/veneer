@@ -7,7 +7,6 @@ library(openxlsx)
 library(readxl)
 library(reticulate)
 library(reshape2)
-#library(RMariaDB)
 library(data.table)
 library(ggplot2)
 library(ggrepel)
@@ -70,12 +69,9 @@ shinyServer(function(input, output, session) {
       withProgress(message = paste0('Reading and Processing ', files[i]), value = 0, {
 #        print(files[i])
         parts <- strsplit(files[i], "\\.")[[1]]
-#        print(parts)
         ext <- parts[length(parts)]
         rn <- parts[length(parts)-1]
-#        print(rn)
         moreparts <- strsplit(rn,"\\/")[[1]]
-#        print(moreparts)
         fn <- moreparts[length(moreparts)]
         if(ext == "csv"){
           df <- read.csv(files[i], header=TRUE, check.names=FALSE)
@@ -84,55 +80,37 @@ shinyServer(function(input, output, session) {
         } else if(ext=="xlsx" || ext=="xls") {
           # use the readxl library instead of openxlsx. openxlsx seems to have
           # a hard time reading xl files output by PD.
-          # df <- read.xlsx(files[i], sep.names=" ", na.strings="")
           predf <- read_excel(files[i])
           df <- as.data.frame(predf)
         } else {
           validate(need(ext=="csv" || ext=="tsv" || ext=="xlsx" || ext=="xls" || ext=="tab" || ext=="txt", "You have the wrong file extension.  Please see the instructions for possible extensions and associated file types." ))
         }
         incProgress(0.5)
-        #      withProgress(message = 'Reading and Processing Uploaded Data', value = 0, {
-        #      print(input$userfile1$datapath)
-        #      xl <- read.xlsx(input$userfile1$datapath, sep.names=" ", na.strings="")
-        #      print("read file")
+        
         df[is.na(df)] <- "" # R likes NA.  I don't
         # need an id column to allow joining information later. See comment immediately below
         df['ID'] <- seq.int(nrow(df))
-        
+        print(fn)
         # call the python script to do the cScIFTING
-        # p is a list of data frames -p1, p2 are SCM and NSB proteins
-        # p3, p4 are SCM nad NSB peptides. p5, p6 are the SCM and NSB PSMs
-        # p7 - MIAPE, p8 - Reagent Analysis, p9 - Motif Analysis p10 - Specificity
-       ## 11/6/23 I have added an 11th item - the number of nG (spontaneous deamidations)
-        # I put that value into a variable then removed that column from the p dataframe
-        # because it throws the list index numbers off everywhere else that I have been using
+        # p is a list of data frames -p1 - p4 are the high, med, low, and zero proteinss.
+        # p5 -p8 are the H/M/L/Z peptides p9 - p12 are the H/M/L/Z PSMs
+        # p13 - Reagent Analysis, p14 - Sequon Analysis and p15 - Specificity
        ## Also, I am only feeding in the two columns cScIFTING uses from the input PD
         # spreadsheet to save memory.  I will need to put the information back into the 
         # PSM tabs in the output spreadsheet.  The ID column is used for this purpose
         p <- cScIFTING( df[c('ID', 'Master Protein Accessions', 'Annotated Sequence')] )
-#        nG <-sum(p[[1]]['countNG'])
-#        tot <-sum(p[[1]]['PSMwSCM'])
 
-        # add a column displaying the % of SCMs that are nG 
-        # simply divide nG column by SCM column
-        
         if( length(p[[3]]) >0 ) {
           lowOK = TRUE
         } else {
           lowOK = FALSE
         }
-
-        # p[[1]]['pctNG'] <- round(p[[1]]['countNG']/p[[1]]['PSMwSCM'], 2)
-        # p[[2]]['pctNG'] <- round(p[[2]]['countNG']/p[[2]]['PSMwSCM'], 2)
-        # if( lowOK ) {
-        #   p[[3]]['pctNG'] <- round(p[[3]]['countNG']/p[[3]]['PSMwSCM'], 2)
-        # } 
-      
         
         if(typeof(annotation) == "character"){
 #          print("at first annotation reading")
           annotation <<- read.delim("./ref/CIRFESSannotations.tsv", header = TRUE)
         }
+
         # add the annotation to the proteins (pep and psm, would be straight-forward)
         p[[1]]<-join(p[[1]], annotation, by=c("MPAnoIso"), type="left", match="first")
         p[[2]]<-join(p[[2]], annotation, by=c("MPAnoIso"), type="left", match="first")
@@ -140,16 +118,6 @@ shinyServer(function(input, output, session) {
           p[[3]]<-join(p[[3]], annotation, by=c("MPAnoIso"), type="left", match="first")
         }
         p[[4]]<-join(p[[4]], annotation, by=c("MPAnoIso"), type="left", match="first")
-        
-        #Add specificity stuff
-#        highOnePSM <- sum(p[[1]]['SCMonePSM'])
-#        medOnePSM <- sum(p[[2]]['SCMonePSM'])
-#        lowOnePSM <- sum(p[[3]]['SCMonePSM'])
-#        noneOnePSM <- sum(p[[4]]['SCMonePSM'])
-#        p[[15]][7,2] <- highOnePSM
-#        p[[15]][8,2] <- medOnePSM
-#        p[[15]][7,2] <- lowOnePSM
-#        p[[15]][8,2] <- noneOnePSM
         
         # put the PSM information from the PD file back into the PSM spreadsheet tabs
         p[[9]] <- join(p[[9]], df, type='left', match='first')
@@ -205,15 +173,6 @@ shinyServer(function(input, output, session) {
         tdf <- FindReplace(data = tdf, Var = "PeptideModifiedSequence", replaceData = Replaces,from = "from", to = "to", exact = FALSE)
         p[[18]]<-data.frame(tdf$Accession, tdf$PeptideSequence, tdf$PeptideModifiedSequence)
         colnames(p[[18]])<-c('ProteinName', 'PeptideSequence', 'PeptideModifiedSequence')
-        
-        # input for CIRFESS
-#        p[[14]]<-data.frame(p[[1]]$MPA)
-#        colnames(p[[14]])<-c('MPA')
-#        p[[15]]<-p[[1]][which(p[[1]]$cirfessScore!=0|p[[1]]$SPC==3|p[[1]]$SPC==4|p[[1]]$"Signal.Peptide..PredSi."=="Yes"|p[[1]]$"Signal.Peptide..SignalP."=="Yes"|p[[1]]$"Signal.Peptide..Phobius."=="Yes"),]
-#        p[[15]]<-p[[1]][which(p[[1]]$"Signal.Peptide..PredSi."=="Yes"),]
-        
-        #put nG back in there
-#        p[[20]] <- round((nG*100)/tot, 2)
       })
       d[[fn]] <- p
     }
@@ -237,32 +196,17 @@ shinyServer(function(input, output, session) {
       } else {
         lowprot<-0
       }
-      noneprot <- length(p[[4]][,1])
-      totprot <- highprot + medprot + lowprot + noneprot
+      zeroprot <- length(p[[4]][,1])
+      totprot <- highprot + medprot + lowprot + zeroprot
       pcthighprot <- highprot/totprot
       pctmedprot <- medprot/totprot
       pctlowprot <- lowprot/totprot
-      pctnoneprot <- noneprot/totprot
-#      pngasef <- p[[13]][1,1]
-#      strep <- p[[13]][2,1]
-#      tryp <- p[[13]][3,1]
-#      highng <- p[[15]][5,2] 
-#      medng <- p[[15]][6,2]
-#      lowng <- p[[15]][7,2]
-#      nxt <- p[[14]][3,1]
-#      nxs <- p[[14]][5,1]
-#      nxc <- p[[14]][7,1]
-#      nxv <- p[[14]][9,1]
-#      scmOne <- sum(p[[1]]['SCMonePSM'])
-#      nsbOne <- sum(p[[2]]['SCMonePSM'])
-#      s <- c( s, c(exp, highprot, pcthighprot, highng, medprot, pctmedprot, medng, lowprot, pctlowprot, lowng, noneprot, pctnoneprot, pngasef, strep, tryp, nxt, nxs, nxc, nxv) )
-      s <- c( s, c(exp, highprot, round(pcthighprot*100,1), medprot, round(pctmedprot*100,1), lowprot, round(pctlowprot*100,1), noneprot, round(pctnoneprot*100,1) ))
-      
-#      s <- c( s, c(exp, scm, nsb, pctProt, pctPSM, pngasef, strep, tryp, nG) )
+      pctzeroprot <- zeroprot/totprot
+
+      s <- c( s, c(exp, highprot, round(pcthighprot*100,1), medprot, round(pctmedprot*100,1), lowprot, round(pctlowprot*100,1), zeroprot, round(pctzeroprot*100,1) ))
     }
     df <- data.frame(matrix(s,ncol=9, byrow=TRUE))
-#    colnames(df) <- c('Experiment', '# High Proteins', '% High Proteins', '# High PSMs nG', '# Medium Proteins', '% Medium Proteins', '# Medium PSMs nG', '# Low Proteins', '% Low Proteins', '# Low PSMs nG', '# None Proteins', '% None Proteins', 'PNGaseF PSMs', 'Streptavidin PSMs', 'Trypsin PSMs', '% NXT', '% NXS', '% NXC', '% NXV' )
-    colnames(df) <- c('Experiment', '# High Proteins', '% High Proteins', '# Medium Proteins', '% Medium Proteins', '# Low Proteins', '% Low Proteins', '# None Proteins', '% None Proteins' )
+    colnames(df) <- c('Experiment', '# High Proteins', '% High Proteins', '# Medium Proteins', '% Medium Proteins', '# Low Proteins', '% Low Proteins', '# Zero Proteins', '% Zero Proteins' )
     df
   })
   
@@ -296,15 +240,14 @@ shinyServer(function(input, output, session) {
           cscfile = paste0(fn, '_Veneer.xlsx')
           protterfile = paste0(fn, '_protter.tsv')
           protter <- rbind(protter, p[[18]])
-#          l = list("SCM Proteins"=p[[1]], "SCM - Filtered"=p[[15]], "NSB Proteins"=p[[2]], "SCM Peptides"=p[[3]], "NSB Peptides"=p[[4]], "SCM PSMs"=p[[5]], "NSB PSMs"=p[[6]], "MIAPE"=p[[7]], "Reagent Analysis"=p[[8]], "Motif Analysis"=p[[9]], "Specificity"=p[[10]], "GO Terms"=p[[11]], "Keywords"=p[[12]])
-#          l = list("SCM Proteins"=p[[1]], "SCM - Filtered"=p[[15]], "NSB Proteins"=p[[2]], "SCM Peptides"=p[[3]], "NSB Peptides"=p[[4]], "SCM PSMs"=p[[5]], "NSB PSMs"=p[[6]], "Reagent Analysis"=p[[8]], "Motif Analysis"=p[[9]], "Specificity"=p[[10]], "GO Terms (Uniprot)"=p[[11]], "Keywords (Uniprot)"=p[[12]])
-          l = list("High Proteins"=p[[1]], "Medium Proteins"=p[[2]], "Low Proteins"=p[[3]], "Zero Proteins"=p[[4]], "High Peptides"=p[[5]], "Medium Peptides"=p[[6]], "Low Peptides"=p[[7]], "Zero Peptides"=p[[8]],  "High PSMs"=p[[9]], "Medium PSMs"=p[[10]], "Low PSMs"=p[[11]], "Zero PSMs"=p[[12]],  "Reagent Analysis"=p[[13]], "Motif Analysis"=p[[14]], "Specificity"=p[[15]], "GO Terms (Uniprot)"=p[[16]], "Keywords (Uniprot)"=p[[17]])
-#          write.xlsx(l, cscfile, colNames=c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE))
+          
+          l = list("High Proteins"=p[[1]], "Medium Proteins"=p[[2]], "Low Proteins"=p[[3]], "Zero Proteins"=p[[4]], "High Peptides"=p[[5]], "Medium Peptides"=p[[6]], "Low Peptides"=p[[7]], "Zero Peptides"=p[[8]],  "High PSMs"=p[[9]], "Medium PSMs"=p[[10]], "Low PSMs"=p[[11]], "Zero PSMs"=p[[12]],  "Reagent Analysis"=p[[13]], "Sequon Analysis"=p[[14]], "Specificity"=p[[15]], "GO Terms (Uniprot)"=p[[16]], "Keywords (Uniprot)"=p[[17]])
           write.xlsx(l, cscfile, colNames=c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE))
+          
           protterout <- protterfy( p[[18]] )
           write.table(protterout, protterfile, row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
-          incProgress (1) 
           
+          incProgress (1) 
           zip(zipfile=filename, files=c(cscfile, protterfile))
         }
       }) # end of withProgress

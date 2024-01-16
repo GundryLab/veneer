@@ -87,40 +87,43 @@ def makeSpecRpt( highprots, medprots, lowprots, zeroprots, numhighpsms, nummedps
 # Protein Reporting
     rows.append({'col1':'High Proteins', 'col2': numhighprots, 'col3': "{:.2f}".format((numhighprots/numProts)*100), 'col4': '% of all proteins'})
     rows.append({'col1':'Medium Proteins', 'col2': nummedprots, 'col3': "{:.2f}".format((nummedprots/numProts)*100), 'col4': '% of all proteins'})
-    if numzeroprots == 0:
-        rows.append({'col1':'Low Proteins', 'col2': numlowprots, 'col3': '0', 'col4': '% of all proteins'})
-    else:
-        rows.append({'col1':'Low Proteins', 'col2': numlowprots, 'col3': "{:.2f}".format((numlowprots/numProts)*100), 'col4': '% of all proteins'})
+    rows.append({'col1':'Low Proteins', 'col2': numlowprots, 'col3': "{:.2f}".format((numlowprots/numProts)*100), 'col4': '% of all proteins'})
     rows.append({'col1':'Zero Proteins', 'col2': numzeroprots, 'col3': "{:.2f}".format((numzeroprots/numProts)*100), 'col4': '% of all proteins'})
 
 #PSM reporting
     rows.append({'col1':'High PSMs', 'col2': numhighpsms, 'col3': "{:.2f}".format((numhighpsms/numPSMs)*100), 'col4': '% of all PSMs'})
     rows.append({'col1':'Medium PSMs', 'col2': nummedpsms, 'col3': "{:.2f}".format((nummedpsms/numPSMs)*100), 'col4': '% of all PSMs'})
-    if numlowpsms == 0:
-        rows.append({'col1':'Low PSMs', 'col2': numlowpsms, 'col3': '0', 'col4': '% of all PSMs'})
-    else:
-        rows.append({'col1':'Low PSMs', 'col2': numlowpsms, 'col3': "{:.2f}".format((numlowpsms/numPSMs)*100), 'col4': '% of all PSMs'})
+    rows.append({'col1':'Low PSMs', 'col2': numlowpsms, 'col3': "{:.2f}".format((numlowpsms/numPSMs)*100), 'col4': '% of all PSMs'})
     rows.append({'col1':'Zero PSMs', 'col2': numzeropsms, 'col3': "{:.2f}".format((numzeropsms/numPSMs)*100), 'col4': '% of all PSMs'})
 
 # one PSM per protein reporting
-    rows.append({'col1':'High Proteins with just one PSM', 'col2': numOnePSMhigh, 'col3':"{:.2f}".format((numOnePSMhigh/numhighprots)*100), 'col4':'% of high proteins'})
-    rows.append({'col1':'Medium Proteins with just one PSM', 'col2': numOnePSMmed, 'col3':"{:.2f}".format((numOnePSMmed/nummedprots)*100), 'col4':'% of med proteins'})
+    if numhighprots == 0:
+        rows.append({'col1':'High Proteins with just one PSM', 'col2': numOnePSMhigh, 'col3':'0', 'col4':'% of high proteins'})
+    else:
+        rows.append({'col1':'High Proteins with just one PSM', 'col2': numOnePSMhigh, 'col3':"{:.2f}".format((numOnePSMhigh/numhighprots)*100), 'col4':'% of high proteins'})
+    if nummedprots == 0:
+        rows.append({'col1':'Medium Proteins with just one PSM', 'col2': numOnePSMmed, 'col3':'0', 'col4':'% of med proteins'})
+    else:
+        rows.append({'col1':'Medium Proteins with just one PSM', 'col2': numOnePSMmed, 'col3':"{:.2f}".format((numOnePSMmed/nummedprots)*100), 'col4':'% of med proteins'})
     if numlowprots == 0:
         rows.append({'col1':'Low Proteins with just one PSM', 'col2': numOnePSMlow, 'col3': '0', 'col4':'% of low proteins'})
     else:
         rows.append({'col1':'Low Proteins with just one PSM', 'col2': numOnePSMlow, 'col3':"{:.2f}".format((numOnePSMlow/numlowprots)*100), 'col4':'% of low proteins'})
-    rows.append({'col1':'Zero Proteins with just one PSM', 'col2': numOnePSMzero, 'col3':"{:.2f}".format((numOnePSMzero/numzeroprots)*100), 'col4':'% of zero proteins'})
+    if numlowprots == 0:
+        rows.append({'col1':'Zero Proteins with just one PSM', 'col2': numOnePSMzero, 'col3':'0', 'col4':'% of zero proteins'})
+    else:
+        rows.append({'col1':'Zero Proteins with just one PSM', 'col2': numOnePSMzero, 'col3':"{:.2f}".format((numOnePSMzero/numzeroprots)*100), 'col4':'% of zero proteins'})
 
 # nG reporting
-    if numhighprots == 0:
+    if numhighpsms == 0:
         rows.append({'col1':'nG PSMs in High Proteins', 'col2': ngHigh, 'col3':'0', 'col4':'% of high PSMs'})
     else:
         rows.append({'col1':'nG PSMs in High Proteins', 'col2': ngHigh, 'col3':"{:.2f}".format((ngHigh/numhighpsms)), 'col4':'% of high PSMs'})
-    if nummedprots == 0:
+    if nummedpsms == 0:
         rows.append({'col1':'nG PSMs in Medium Proteins', 'col2': ngMed, 'col3':'0', 'col4':'% of medium PSMs'})
     else:
         rows.append({'col1':'nG PSMs in Medium Proteins', 'col2': ngMed, 'col3':"{:.2f}".format((ngMed/nummedpsms)), 'col4':'% of medium PSMs'})
-    if numlowprots == 0:
+    if numlowpsms == 0:
         rows.append({'col1':'nG PSMs in Low Proteins', 'col2': ngLow, 'col3':'0', 'col4':'% of low proteins'})
     else:
         rows.append({'col1':'nG PSMs in Low Proteins', 'col2': ngLow, 'col3':"{:.2f}".format((ngLow/numlowpsms)), 'col4':'% of low PSMs'})

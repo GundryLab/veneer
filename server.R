@@ -93,10 +93,25 @@ shinyServer(function(input, output, session) {
         # PSM tabs in the output spreadsheet.  The ID column is used for this purpose
         p <- cScIFTING( df[c('ID', 'Master Protein Accessions', 'Annotated Sequence')] )
 
+        if( length(p[[1]]) >0 ) {
+          highOK = TRUE
+        } else {
+          highOK = FALSE
+        }
+        if( length(p[[2]]) >0 ) {
+          medOK = TRUE
+        } else {
+          medOK = FALSE
+        }
         if( length(p[[3]]) >0 ) {
           lowOK = TRUE
         } else {
           lowOK = FALSE
+        }
+        if( length(p[[4]]) >0 ) {
+          zeroOK = TRUE
+        } else {
+          zeroOK = FALSE
         }
         
         if(typeof(annotation) == "character"){
@@ -105,14 +120,21 @@ shinyServer(function(input, output, session) {
         }
 
         # add the annotation to the proteins (pep and psm, would be straight-forward)
-        p[[1]]<-join(p[[1]], annotation, by=c("MPAnoIso"), type="left", match="first")
-        p[[2]]<-join(p[[2]], annotation, by=c("MPAnoIso"), type="left", match="first")
+        if( highOK ) {
+          p[[1]]<-join(p[[1]], annotation, by=c("MPAnoIso"), type="left", match="first")
+        }
+        if( medOK ) {
+          p[[2]]<-join(p[[2]], annotation, by=c("MPAnoIso"), type="left", match="first")
+        }
         if( lowOK ) {
           p[[3]]<-join(p[[3]], annotation, by=c("MPAnoIso"), type="left", match="first")
         }
-        p[[4]]<-join(p[[4]], annotation, by=c("MPAnoIso"), type="left", match="first")
+        if( zeroOK ) {
+          p[[4]]<-join(p[[4]], annotation, by=c("MPAnoIso"), type="left", match="first")
+        }
         
         # put the PSM information from the PD file back into the PSM spreadsheet tabs
+        # strangely, if a data frame is empty, it doesn't care
         p[[9]] <- join(p[[9]], df, type='left', match='first')
         p[[9]] <- p[[9]][, !names(p[[9]]) %in% c("ID")]
         p[[10]] <- join(p[[10]], df, type='left', match='first')
@@ -123,21 +145,31 @@ shinyServer(function(input, output, session) {
         p[[12]] <- p[[12]][, !names(p[[12]]) %in% c("ID")]
         
         # perform the GO term analysis
-        if( lowOK ){
-          go <- c(p[[1]]$Gene.Ontology..GO...Uniprot., p[[2]]$Gene.Ontology..GO...Uniprot., p[[3]]$Gene.Ontology..GO...Uniprot.)
-        } else {
-          go <- c(p[[1]]$Gene.Ontology..GO...Uniprot., p[[2]]$Gene.Ontology..GO...Uniprot.)
+        go <- c()
+        if( highOK ) {
+          go <- c( go, p[[1]]$Gene.Ontology..GO...Uniprot. )  #c(p[[1]]$Gene.Ontology..GO...Uniprot., p[[2]]$Gene.Ontology..GO...Uniprot., p[[3]]$Gene.Ontology..GO...Uniprot.)
+        }
+        if( medOK ) {
+          go <- c( go, p[[2]]$Gene.Ontology..GO...Uniprot. )   #c(p[[1]]$Gene.Ontology..GO...Uniprot., p[[2]]$Gene.Ontology..GO...Uniprot., p[[3]]$Gene.Ontology..GO...Uniprot.)
+        }
+        if( lowOK ) {
+          go <- c( go, p[[3]]$Gene.Ontology..GO...Uniprot. )  #c(p[[1]]$Gene.Ontology..GO...Uniprot., p[[2]]$Gene.Ontology..GO...Uniprot., p[[3]]$Gene.Ontology..GO...Uniprot.)
         }
         tdf <- as.data.frame(table(unlist(sapply(as.character(go),strsplit,split=';'),use.names=FALSE)))
         colnames(tdf)<-c('Gene Ontology Term', 'Count')
         p[[16]]<-tdf[order(-tdf$Count),]
 
         # perform the keyword analysis
+        kw <- c()  
+        if( highOK ) {
+          kw <- c(kw,  p[[1]]$Keywords..Uniprot. )
+        } 
+        if( medOK ) {
+          kw <- c( kw, p[[2]]$Keywords..Uniprot. )
+        } 
         if( lowOK ) {
-          kw <- c(p[[1]]$Keywords..Uniprot., p[[2]]$Keywords..Uniprot., p[[3]]$Keywords..Uniprot.)
-        } else {
-          kw <- c(p[[1]]$Keywords..Uniprot., p[[2]]$Keywords..Uniprot.)
-        }
+          kw <- c(kw,  p[[3]]$Keywords..Uniprot. )
+        } 
         tdf <- as.data.frame(table(unlist(sapply(as.character(kw),strsplit,split=';'),use.names=FALSE)))
         colnames(tdf)<-c('Keywords (Uniprot)', 'Count')
         p[[17]]<-tdf[order(-tdf$Count),]
@@ -154,8 +186,13 @@ shinyServer(function(input, output, session) {
         # and what to replace it with.  that dataframe 'Replaces' is for.
         ###################
         
-        tdf <-p[[9]][c('MPA', 'Annotated Sequence')]
-        tdf<- rbind(tdf, p[[10]][c('MPA', 'Annotated Sequence')])
+        tdf <- data.frame( MPA=character(), 'Annotated Sequence'=character() )
+        if( highOK ) {
+          tdf <-p[[9]][c('MPA', 'Annotated Sequence')]
+        }
+        if( medOK ) {
+          tdf<- rbind(tdf, p[[10]][c('MPA', 'Annotated Sequence')])
+        }
         if( lowOK ) {
           tdf<- rbind(tdf, p[[11]][c('MPA', 'Annotated Sequence')])
         }
@@ -182,14 +219,22 @@ shinyServer(function(input, output, session) {
     for(i in 1:length( data_input() )) {
       p<-data_input()[[i]]
       exp <- names(data_input())[i] 
-      highprot <- length(p[[1]][,1])
-      medprot <- length(p[[2]][,1])
-      if( length(p[[3]]) > 0){
-        lowprot <- length(p[[3]][,1])
-      } else {
-        lowprot<-0
+      highprot <- 0
+      medprot <- 0
+      lowprot <- 0
+      zeroprot <- 0
+      if( length(p[[1]]) > 0 ) {
+        highprot <- length(p[[1]][,1])
       }
-      zeroprot <- length(p[[4]][,1])
+      if( length(p[[2]]) > 0 ) {
+        medprot <- length(p[[2]][,1])
+      }
+      if( length(p[[3]]) > 0 ) {
+        lowprot <- length(p[[3]][,1])
+      }
+      if( length(p[[4]]) > 0 ) {
+        zeroprot <- length(p[[4]][,1])
+      }
       totprot <- highprot + medprot + lowprot + zeroprot
       pcthighprot <- highprot/totprot
       pctmedprot <- medprot/totprot
@@ -224,8 +269,9 @@ shinyServer(function(input, output, session) {
     content = function(filename) {
       output$readerror <- renderText("")
       size <- length(data_input())+1
+      CSC_log <- airtable(base="app3Slg8M9TWTtuIQ", tables="CSC_Log")
+      
       withProgress(message = 'Writing Files', max= size, value = 0, {
-        protter <- setNames(data.frame(matrix(ncol = 3, nrow = 0)), c("ProteinName", "PeptideSequence", "PeptideModifiedSequence"))
         d <- data_input()
         for(i in 1:length( d )) {
           p <- d[[i]]

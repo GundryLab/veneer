@@ -10,7 +10,6 @@ library(reshape2)
 library(data.table)
 library(ggplot2)
 library(ggrepel)
-#library(airtabler)
 
 
 options(shiny.maxRequestSize = 150*1024^2)
@@ -83,7 +82,6 @@ shinyServer(function(input, output, session) {
         df[is.na(df)] <- "" # R likes NA.  I don't
         # need an id column to allow joining information later. See comment immediately below
         df['ID'] <- seq.int(nrow(df))
-        print(fn)
         # call the python script to do the cScIFTING
         # p is a list of data frames -p1 - p4 are the high, med, low, and zero proteinss.
         # p5 -p8 are the H/M/L/Z peptides p9 - p12 are the H/M/L/Z PSMs
@@ -135,13 +133,13 @@ shinyServer(function(input, output, session) {
         
         # put the PSM information from the PD file back into the PSM spreadsheet tabs
         # strangely, if a data frame is empty, it doesn't care
-        p[[9]] <- join(p[[9]], df, type='left', match='first')
+        p[[9]] <- join(p[[9]], df, by=c('ID', 'Master Protein Accessions', 'Annotated Sequence'), type='left', match='first')
         p[[9]] <- p[[9]][, !names(p[[9]]) %in% c("ID")]
-        p[[10]] <- join(p[[10]], df, type='left', match='first')
+        p[[10]] <- join(p[[10]], df, by=c('ID', 'Master Protein Accessions', 'Annotated Sequence'), type='left', match='first')
         p[[10]] <- p[[10]][, !names(p[[10]]) %in% c("ID")]
-        p[[11]] <- join(p[[11]], df, type='left', match='first')
+        p[[11]] <- join(p[[11]], df, by=c('ID', 'Master Protein Accessions', 'Annotated Sequence'), type='left', match='first')
         p[[11]] <- p[[11]][, !names(p[[11]]) %in% c("ID")]
-        p[[12]] <- join(p[[12]], df, type='left', match='first')
+        p[[12]] <- join(p[[12]], df, by=c('ID', 'Master Protein Accessions', 'Annotated Sequence'), type='left', match='first')
         p[[12]] <- p[[12]][, !names(p[[12]]) %in% c("ID")]
         
         # perform the GO term analysis
@@ -264,14 +262,16 @@ shinyServer(function(input, output, session) {
 
   output$dlAnno <- downloadHandler(
     filename = function() {
-      paste0(input$userfile1$name, '_Veneer.zip')
+      parts <- strsplit(input$userfile1$name, "\\.")[[1]]
+      rn <- parts[length(parts)-1]
+      paste0(rn, '_Veneer.zip')
     },
     content = function(filename) {
       output$readerror <- renderText("")
       size <- length(data_input())+1
-      CSC_log <- airtable(base="app3Slg8M9TWTtuIQ", tables="CSC_Log")
-      
+
       withProgress(message = 'Writing Files', max= size, value = 0, {
+        protter <- setNames(data.frame(matrix(ncol = 3, nrow = 0)), c("ProteinName", "PeptideSequence", "PeptideModifiedSequence"))
         d <- data_input()
         for(i in 1:length( d )) {
           p <- d[[i]]

@@ -23,12 +23,16 @@ shinyUI(navbarPage("", id="main", theme = "bootstrap.css",
     '))),
     
 #    useShinyjs(),        
-    tags$img(src="Veneer_OverviewNew.png", width="583px", align="right"),
+#    tags$img(src="Veneer_OverviewNew.png", width="583px", align="right"),
     h4("Welcome to ", span(class ="text-success", "Veneer"),"!"),
     p(tags$i("Filtering, annotating and curating cell surface protein data")),
-    p("Veneer is a web app for analyzing mass spectrometry data from cell surface capture and related methods. 
-       Veneer rapidly processes search results to filter out non-specific binders and annotate data with 
-       information from >10 resources"),
+    p("Veneer is a web-based bioinformatic tool to rapidly and automatically assess and curate data from cell surface 
+      capture (CSC; e.g., µCSC, autoCSC, classic CSC) and related workflows (i.e., N-glycoprotein or N-glycopeptide 
+      enrichment strategies including ligand receptor capture and methods that incorporate, biocytin hydrazide, aminooxy 
+      biotin, and alkoxyamine-PEG4-biotin) that release captured glycopeptides by PNGase F treatment. Veneer employs a 
+      categorization scheme that first assigns levels of evidence (1, 2, 3) and then designates proteins to cell surface 
+      protein assignment tiers (high, medium, low, and zero. Veneer provides enhanced functional annotations contributing 
+      added biological insights with high relevance for cell surface proteins."),
     p("Veneer was written in Python and R and the web application was developed using the Shiny library. Source 
        code and all reference lookup tables are publicly available at ", tags$a(href="https://github.com/GundryLab/veneer", "GitHub"), "."),
 

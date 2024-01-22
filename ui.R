@@ -86,7 +86,7 @@ shinyUI(navbarPage("", id="main", theme = "bootstrap.css",
        have requests for additional species, please contact us.")
     ),
   # Sidebar with a slider input for number of bins
-  tabPanel("Filter and Annotate",
+  tabPanel("Assign Evidence and Annotate",
     sidebarPanel(
       fileInput("userfile1", "Upload file", multiple =FALSE, buttonLabel = "Browse Files", placeholder = "Select File"),
       p('Upload a single proteomics result file or a zip file of multiple results')

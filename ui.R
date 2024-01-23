@@ -48,10 +48,10 @@ shinyUI(navbarPage("", id="main", theme = "bootstrap.css",
 #    p(tags$i("Before you begin:")),
     p(style="font-size: 17px", tags$i("Before you begin:")),
     p("It is strongly recommended that all users read the ", tags$a(href="Veneer_UserGuide.pdf", "User Guide"), " which contains 
-      step-by-step tutorials. The User Guide comprehensively defines the functions and annotations provided in Veneer."
+      step-by-step tutorials. The User Guide defines the functions and annotations provided in Veneer."
     ),
     p(style="font-size: 17px", tags$i("File Format Requirements:")),
-    p("Import file format is critical to success.",  tags$b("Filter and Annotate "), "accepts xlsx files 
+    p("Import file format is critical to success.",  tags$b("Annotate and Assign Evidence "), "accepts .xlsx, .xls, .tsv, and .csv files files 
       containing a list of protein identifiers (UniProt Accession) and corresponding 
       peptide spectrum matches (PSM). There are four requirements:",
       tags$ol(
@@ -59,13 +59,13 @@ shinyUI(navbarPage("", id="main", theme = "bootstrap.css",
         tags$li("Another column must be present containing PSM sequence information labeled: ", tags$i("Annotated Sequence")), 
         tags$li("The PSM entries in ", tags$i("Annotated Sequence"),  " must be in the following format: [R].TQDEILFSnSTR.[L], where flanking amino acids are in brackets and deamidation (release of the N-glycan from the asparagine) is denoted as small letter n"),
 #        tags$li("Other columns may be present but are not necessary and will be ignored except for being reported back in the output."),
-        tags$li("The file cannot exceed 50 MB") 
+        tags$li("The file cannot exceed 150 MB") 
       ),
       "Optional:",
       tags$ol(
         tags$li("Other columns may be included in the input file, such as other output from Proteome Discoverer.  
                 These columns will be ignored except for being reported back in the output"),
-        tags$li("Multiple xlsx files can be combined into a zip file.")
+        tags$li("Multiple files can be combined into a zip file.")
       )
     ),
     p(style="font-size: 17px", tags$i("Example files:")),

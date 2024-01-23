@@ -23,9 +23,9 @@ shinyUI(navbarPage("", id="main", theme = "bootstrap.css",
     '))),
     
 #    useShinyjs(),        
-#    tags$img(src="Veneer_OverviewNew.png", width="583px", align="right"),
+    tags$img(src="Veneer_OverviewV2.png", width="583px", align="right"),
     h4("Welcome to ", span(class ="text-success", "Veneer"),"!"),
-    p(tags$i("Filtering, annotating and curating cell surface protein data")),
+    p(tags$i("Annotating, categorizing, and curating cell surface protein data")),
     p("Veneer is a web-based bioinformatic tool to rapidly and automatically assess and curate data from cell surface 
       capture (CSC; e.g., µCSC, autoCSC, classic CSC) and related workflows (i.e., N-glycoprotein or N-glycopeptide 
       enrichment strategies including ligand receptor capture and methods that incorporate, biocytin hydrazide, aminooxy 
@@ -86,7 +86,7 @@ shinyUI(navbarPage("", id="main", theme = "bootstrap.css",
        have requests for additional species, please contact us.")
     ),
   # Sidebar with a slider input for number of bins
-  tabPanel("Assign Evidence and Annotate",
+  tabPanel("Annotate and Assign Evidence",
     sidebarPanel(
       fileInput("userfile1", "Upload file", multiple =FALSE, buttonLabel = "Browse Files", placeholder = "Select File"),
       p('Upload a single proteomics result file or a zip file of multiple results')

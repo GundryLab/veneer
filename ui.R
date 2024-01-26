@@ -47,7 +47,7 @@ shinyUI(navbarPage("", id="main", theme = "bootstrap.css",
   tabPanel( "Instructions",
 #    p(tags$i("Before you begin:")),
     p(style="font-size: 17px", tags$i("Before you begin:")),
-    p("It is strongly recommended that all users read the ", tags$a(href="Veneer_UserGuide.pdf", "User Guide"), " which contains 
+    p("It is strongly recommended that all users read the ", tags$a(href="Veneer_UserGuide_20240126.pdf", "User Guide"), " which contains 
       step-by-step tutorials. The User Guide defines the functions and annotations provided in Veneer."
     ),
     p(style="font-size: 17px", tags$i("File Format Requirements:")),

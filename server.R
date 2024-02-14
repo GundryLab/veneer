@@ -7,9 +7,9 @@ library(openxlsx)
 library(readxl)
 library(reticulate)
 library(reshape2)
-library(data.table)
-library(ggplot2)
-library(ggrepel)
+#library(data.table)
+#library(ggplot2)
+#library(ggrepel)
 
 
 options(shiny.maxRequestSize = 150*1024^2)
@@ -111,7 +111,7 @@ shinyServer(function(input, output, session) {
         } else {
           zeroOK = FALSE
         }
-        
+
         if(typeof(annotation) == "character"){
 #          print("at first annotation reading")
           annotation <<- read.delim("./ref/CIRFESSannotations.tsv", header = TRUE)
@@ -130,18 +130,26 @@ shinyServer(function(input, output, session) {
         if( zeroOK ) {
           p[[4]]<-join(p[[4]], annotation, by=c("MPAnoIso"), type="left", match="first")
         }
-        
+
         # put the PSM information from the PD file back into the PSM spreadsheet tabs
         # strangely, if a data frame is empty, it doesn't care
-        p[[9]] <- join(p[[9]], df, by=c('ID', 'Master Protein Accessions', 'Annotated Sequence'), type='left', match='first')
-        p[[9]] <- p[[9]][, !names(p[[9]]) %in% c("ID")]
-        p[[10]] <- join(p[[10]], df, by=c('ID', 'Master Protein Accessions', 'Annotated Sequence'), type='left', match='first')
-        p[[10]] <- p[[10]][, !names(p[[10]]) %in% c("ID")]
-        p[[11]] <- join(p[[11]], df, by=c('ID', 'Master Protein Accessions', 'Annotated Sequence'), type='left', match='first')
-        p[[11]] <- p[[11]][, !names(p[[11]]) %in% c("ID")]
-        p[[12]] <- join(p[[12]], df, by=c('ID', 'Master Protein Accessions', 'Annotated Sequence'), type='left', match='first')
-        p[[12]] <- p[[12]][, !names(p[[12]]) %in% c("ID")]
-        
+        if( highOK ) {
+          p[[9]] <- join(p[[9]], df, by=c('ID', 'Master Protein Accessions', 'Annotated Sequence'), type='left', match='first')
+          p[[9]] <- p[[9]][, !names(p[[9]]) %in% c("ID")]
+        }
+        if( medOK ) {
+          p[[10]] <- join(p[[10]], df, by=c('ID', 'Master Protein Accessions', 'Annotated Sequence'), type='left', match='first')
+          p[[10]] <- p[[10]][, !names(p[[10]]) %in% c("ID")]
+        }
+        if( lowOK ) {
+          p[[11]] <- join(p[[11]], df, by=c('ID', 'Master Protein Accessions', 'Annotated Sequence'), type='left', match='first')
+          p[[11]] <- p[[11]][, !names(p[[11]]) %in% c("ID")]
+        }
+        if( zeroOK ) {
+          p[[12]] <- join(p[[12]], df, by=c('ID', 'Master Protein Accessions', 'Annotated Sequence'), type='left', match='first')
+          p[[12]] <- p[[12]][, !names(p[[12]]) %in% c("ID")]
+        }
+
         # perform the GO term analysis
         go <- c()
         if( highOK ) {
@@ -201,6 +209,7 @@ shinyServer(function(input, output, session) {
         tdf <- FindReplace(data = tdf, Var = "PeptideModifiedSequence", replaceData = Replaces,from = "from", to = "to", exact = FALSE)
         p[[18]]<-data.frame(tdf$Accession, tdf$PeptideSequence, tdf$PeptideModifiedSequence)
         colnames(p[[18]])<-c('ProteinName', 'PeptideSequence', 'PeptideModifiedSequence')
+        print("After protter")
       })
       d[[fn]] <- p
     }

@@ -1,12 +1,12 @@
 library(shiny)
 #library(shinyjs)
-library(plyr)
-library(dplyr)
-library(DataCombine)
+library(plyr)  # imported by reshape2
+library(dplyr) # imported by DataCombine
+library(DataCombine) # find replace
 library(openxlsx)
 library(readxl)
 library(reticulate)
-library(reshape2)
+#library(reshape2) 
 #library(data.table)
 #library(ggplot2)
 #library(ggrepel)
@@ -17,15 +17,13 @@ source('functions.R')
 
 ###############################################################################
 #
+# Ignore if running locally, otherwise...
+#
 # The following three lines must be uncommneted in the shinyapps.io version
 # in order for it to work there. The .Rprofile must also be in place (see git
 # repo).  The name of the virtual environment (below) must be the same as
 # the VIRTUALENV_NAME variable in the .Rprofile. 
 #
-# In theory, with the .Rprofile, we shouldn't need to comment out the three 
-# virtual environment lines (below) to work locally, but I get complaints about
-# pip on (some of) my local machines when installing pandas to the virtual 
-# environment...
 ###############################################################################
 
 virtualenv_create("r-reticulate")
@@ -37,8 +35,6 @@ source_python('./ref/cScIFTING.py')
 # put this here so that it only runs once per instance on shinyapps.io
 #annotation <- read.delim("./ref/CIRFESSannotations.tsv", header = TRUE)
 annotation <- "a"
-# There is a chance that some high/med/low/zero groups will have no proteins in them.  Low is most likely.
-# I set a variable here to set later so that it can be seen in each function.
 
 
 shinyServer(function(input, output, session) {
@@ -91,6 +87,8 @@ shinyServer(function(input, output, session) {
         # PSM tabs in the output spreadsheet.  The ID column is used for this purpose
         p <- cScIFTING( df[c('ID', 'Master Protein Accessions', 'Annotated Sequence')] )
 
+        # There is a chance that some high/med/low/zero groups will have no proteins in them
+        # Check for this and set a flag so to avoid using empty H/M/L/Z data frames
         if( length(p[[1]]) >0 ) {
           highOK = TRUE
         } else {
@@ -209,7 +207,6 @@ shinyServer(function(input, output, session) {
         tdf <- FindReplace(data = tdf, Var = "PeptideModifiedSequence", replaceData = Replaces,from = "from", to = "to", exact = FALSE)
         p[[18]]<-data.frame(tdf$Accession, tdf$PeptideSequence, tdf$PeptideModifiedSequence)
         colnames(p[[18]])<-c('ProteinName', 'PeptideSequence', 'PeptideModifiedSequence')
-        print("After protter")
       })
       d[[fn]] <- p
     }

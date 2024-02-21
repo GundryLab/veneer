@@ -7,8 +7,8 @@ def printLog(log):
     return(log)
 
 def findSequon(seq):
-    seq = re.sub('\[|\]', '', seq)
-    seq = re.split('\.', seq )[1] +  re.split('\.', seq )[2]
+    seq = re.sub('\\[|\\]', '', seq)
+    seq = re.split('\\.', seq )[1] +  re.split('\\.', seq )[2]
     l = re.findall('n[A|C|D|E|F|G|H|I|K|L|M|N|O|Q|R|S|T|U|V|W|Y|a|c|d|e|f|g|h|i|k|l|m|n|o|q|r|s|t|u|v|w|y][C|S|T|V|c|s|t|v]', seq)
     if l:
         return(l)
@@ -16,8 +16,8 @@ def findSequon(seq):
         return(0)
 
 def findDeamination(seq):
-    seq = re.sub('\[|\]', '', seq)
-    seq = re.split('\.', seq )[1] +  re.split('\.', seq )[2]
+    seq = re.sub('\\[|\\]', '', seq)
+    seq = re.split('\\.', seq )[1] +  re.split('\\.', seq )[2]
     l = re.findall('n[g|G][C|S|T|V|c|s|t|v]', seq)
     if l:
         return(l)
@@ -25,8 +25,8 @@ def findDeamination(seq):
         return (0)
 
 def findMultiN(seq):
-    seq = re.sub('\[|\]', '', seq)
-    seq = re.split('\.', seq )[1] +  re.split('\.', seq )[2]
+    seq = re.sub('\\[|\\]', '', seq)
+    seq = re.split('\\.', seq )[1] +  re.split('\\.', seq )[2]
     l = re.findall('n|N', seq)
     if len(l)>2:
         return(1)
@@ -35,7 +35,7 @@ def findMultiN(seq):
 
 
 def convertSeq(seq):
-    seq = re.split('\.', seq )[1]
+    seq = re.split('\\.', seq )[1]
     seq = seq.upper()
     return(seq)
 

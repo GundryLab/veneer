@@ -1,34 +1,27 @@
 library(shiny)
-#library(shinyjs)
 library(plyr)  # imported by reshape2
 library(dplyr) # imported by DataCombine
 library(DataCombine) # find replace
 library(openxlsx)
 library(readxl)
 library(reticulate)
-#library(reshape2) 
-#library(data.table)
-#library(ggplot2)
-#library(ggrepel)
-
 
 options(shiny.maxRequestSize = 150*1024^2)
 source('functions.R')
 
 ###############################################################################
 #
-# Ignore if running locally, otherwise...
-#
-# The following three lines must be uncommneted in the shinyapps.io version
-# in order for it to work there. The .Rprofile must also be in place (see git
-# repo).  The name of the virtual environment (below) must be the same as
-# the VIRTUALENV_NAME variable in the .Rprofile. 
+# We use python for cScIFTING therefore we use the R library reticulate to 
+# incorporate pytyhon.  The python environment is hosted in a virtual environment
+# that we have to set up.  It is set up by the .Rprofile file in the root of this
+# project and the lines below
 #
 ###############################################################################
-
-virtualenv_create("r-reticulate")
-virtualenv_install("r-reticulate", "pandas")
+envname = Sys.getenv("VIRTUALENV_NAME")
+python_path = Sys.getenv("PYTHON_PATH")
+virtualenv_create("r-reticulate", python=python_path, packages = c('pandas'))
 use_virtualenv("r-reticulate", required = T)
+
 # this is how we access the python script
 source_python('./ref/cScIFTING.py')
 

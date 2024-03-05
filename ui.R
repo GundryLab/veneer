@@ -108,15 +108,27 @@ shinyUI(navbarPage("", id="main", theme = "bootstrap.css",
     div(
       h4("How to reference ", span(class ="text-success", "Veneer") ),
       p("If you use any of the Veneer tools in your work, please cite the original manuscript:"),
-      p("Publication Pending")
-      # p("Authors, Title,", 
+#      p("Publication Pending"),
+      p(),
+        tags$ol(
+          tags$li( 
+            "Berg Luecke, L., ", tags$i("et al."), " Surfaceome mapping of primary human heart cells with CellSurfer uncovers cardiomyocyte surface protein LSMEM2 and proteome dynamics in failing hearts.",
+            tags$i("Nat Cardiovasc Res "), tags$b("2"), ", 76-95 (2023).", tags$a(href="https://www.ncbi.nlm.nih.gov/pubmed/36950336/", "PMID: 36950336"), tags$br(), tags$a(href="https://doi.org/10.1038/s44161-022-00200-y", "DOI: 10.1038/s44161-022-00200-y")
+          ),
+          p(),
+          tags$li( 
+            "Berg Luecke, L. ", tags$i("et al."), " Veneer Is a Webtool for Rapid, Standardized, and Transparent Interpretation, Annotation, and Reporting of Mammalian Cell Surface N-Glycocapture Data.", 
+            tags$i("J. Proteome Res. "), "(2024).", tags$br(), tags$a(href="https://doi.org/10.1021/acs.jproteome.3c00800", "DOI: 10.1021/acs.jproteome.3c00800")
+          )
+          # p("Authors, Title,", 
       #   tags$a(href="https://www.ncbi.nlm.nih.gov/pubmed/32053146/", "https://www.ncbi.nlm.nih.gov/pubmed/32053146/"))
+    )
     ),
     br(),
-    div(
-      h4("Publications that cite ", span(class ="text-success", "Veneer") ),
-      p("Coming Soon!")
-    ),
+    # div(
+    #   h4("Publications that cite ", span(class ="text-success", "Veneer") ),
+    #   p("Coming Soon!")
+    # ),
     br(),
     # div(
     #   h4("Publications that support the ", span(class ="text-success", "SPC Score") ),

@@ -35,5 +35,8 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 
+# Mac .DS_Store (Desktop Services) file clutter
+.DS_Store
+
 # R Environment Variables
 .Renviron

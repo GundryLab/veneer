@@ -32,8 +32,9 @@ annotation <- "a"
 
 shinyServer(function(input, output, session) {
 
-  data_input <- eventReactive(input$userfile1, {
+  data_input <- reactive( {
     
+    req(input$userfile1)
     output$readerror <- renderText("")
     
     d <- list()
@@ -204,7 +205,9 @@ shinyServer(function(input, output, session) {
       d[[fn]] <- p
     }
     return(d)
-  })
+  })%>%
+    bindCache(input$userfile1) %>%
+    bindEvent(input$userfile1)
 
   
   ####################################

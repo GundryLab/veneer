@@ -19,7 +19,7 @@ source('functions.R')
 ###############################################################################
 envname = Sys.getenv("VIRTUALENV_NAME")
 python_path = Sys.getenv("PYTHON_PATH")
-virtualenv_create("r-reticulate", python=python_path, packages = c('pandas'))
+virtualenv_create("r-reticulate", python=python_path, requirements = "requirements.txt")
 use_virtualenv("r-reticulate", required = T)
 
 # this is how we access the python script
@@ -79,7 +79,7 @@ shinyServer(function(input, output, session) {
         # spreadsheet to save memory.  I will need to put the information back into the 
         # PSM tabs in the output spreadsheet.  The ID column is used for this purpose
         p <- cScIFTING( df[c('ID', 'Master Protein Accessions', 'Annotated Sequence')] )
-
+        
         # There is a chance that some high/med/low/zero groups will have no proteins in them
         # Check for this and set a flag so to avoid using empty H/M/L/Z data frames
         if( length(p[[1]]) >0 ) {

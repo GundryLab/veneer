@@ -1,10 +1,4 @@
 library(shiny)
-#library(shinyjs)
-#library(RMariaDB)
-#library(airtabler)
-
-source('functions.R')
-
 
 shinyUI(navbarPage("", id="main", theme = "bootstrap.css",
   

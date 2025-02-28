@@ -8,7 +8,6 @@ processZip <- function(zipfile) {
   }
   unzip(zipfile, exdir=ud)
   files <- list.files(ud, full.names=TRUE)
-  
   return(files)
 }  
 

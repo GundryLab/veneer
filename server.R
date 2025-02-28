@@ -47,8 +47,8 @@ shinyServer(function(input, output, session) {
       files <-processSingle(input$userfile1$datapath, input$userfile1$name)
     }
     for (i in seq_along(files)) {
-      withProgress(message = paste0('Reading and Processing ', files[i]), value = 0, {
-#        print(files[i])
+      withProgress(message = paste0('Reading and Processing ', basename( files[i]) ), value = 0, {
+#        print(files[i]) 
         parts <- strsplit(files[i], "\\.")[[1]]
         ext <- parts[length(parts)]
         rn <- parts[length(parts)-1]
@@ -270,6 +270,7 @@ shinyServer(function(input, output, session) {
       size <- length(data_input())+1
 
       withProgress(message = 'Writing Files', max= size, value = 0, {
+        td = tempdir()
         protter <- setNames(data.frame(matrix(ncol = 3, nrow = 0)), c("ProteinName", "PeptideSequence", "PeptideModifiedSequence"))
         d <- data_input()
         for(i in 1:length( d )) {
@@ -279,14 +280,15 @@ shinyServer(function(input, output, session) {
           protterfile = paste0(fn, '_protter.tsv')
           protter <- rbind(protter, p[[18]])
           
-          l = list("High Proteins"=p[[1]], "Medium Proteins"=p[[2]], "Low Proteins"=p[[3]], "Zero Proteins"=p[[4]], "High Peptides"=p[[5]], "Medium Peptides"=p[[6]], "Low Peptides"=p[[7]], "Zero Peptides"=p[[8]],  "High PSMs"=p[[9]], "Medium PSMs"=p[[10]], "Low PSMs"=p[[11]], "Zero PSMs"=p[[12]],  "Reagent Analysis"=p[[13]], "Sequon Analysis"=p[[14]], "Specificity"=p[[15]], "GO Terms (Uniprot)"=p[[16]], "Keywords (Uniprot)"=p[[17]])
-          write.xlsx(l, cscfile, colNames=c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE))
+          highmed = rbind(p[[1]], p[[2]])
+          l = list("High Proteins"=p[[1]], "Medium Proteins"=p[[2]], "High+Medium Proteins"=highmed, "Low Proteins"=p[[3]], "Zero Proteins"=p[[4]], "High Peptides"=p[[5]], "Medium Peptides"=p[[6]], "Low Peptides"=p[[7]], "Zero Peptides"=p[[8]],  "High PSMs"=p[[9]], "Medium PSMs"=p[[10]], "Low PSMs"=p[[11]], "Zero PSMs"=p[[12]],  "Reagent Analysis"=p[[13]], "Sequon Analysis"=p[[14]], "Specificity"=p[[15]], "GO Terms (Uniprot)"=p[[16]], "Keywords (Uniprot)"=p[[17]])
+          write.xlsx(l, cscfile, colNames=c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE))
           
           protterout <- protterfy( p[[18]] )
           write.table(protterout, protterfile, row.names=FALSE, col.names=FALSE, quote=FALSE, sep="\t")
           
           incProgress (1) 
-          zip(zipfile=filename, files=c(cscfile, protterfile))
+          zip(zipfile=filename, files=c(cscfile, protterfile), extras=paste0("-q -j -b ", td) )
         }
       }) # end of withProgress
     } # end of downloadHandler content argument
